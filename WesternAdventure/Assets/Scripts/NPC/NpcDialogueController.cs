@@ -15,7 +15,7 @@ namespace WesternAdventure.NPC
     {
         [SerializeField] private NpcPersona persona;
         [SerializeField] private string ollamaBaseUrl = "http://localhost:11434";
-        [SerializeField] private string modelName = "llama3.2:1b";
+        [SerializeField] private string modelName = "llama3.2:3b";
         [SerializeField] private int timeoutSeconds = 20;
 
         public event Action OnThinkingStarted;

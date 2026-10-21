@@ -21,9 +21,10 @@ _(Ödül fonksiyonu, gözlem/aksiyon uzayı, eğitim süreci ve akış diyagram�
 
 ## 3. Yerel LLM Entegrasyonu
 
-NPC, [Ollama](https://ollama.com/) üzerinde çalışan yerel bir modelle (ör. `llama3.2:1b`)
-konuşur. Model çıktısı, oyuncuya gösterilecek repliğin yanında oyun durumunu değiştirecek
-bir eylemi de içeren yapılandırılmış JSON formatındadır:
+NPC, [Ollama](https://ollama.com/) üzerinde çalışan yerel bir modelle (`llama3.2:3b`,
+~6GB VRAM'li donanımda rahat çalışıyor) konuşur. Model çıktısı, oyuncuya gösterilecek
+repliğin yanında oyun durumunu değiştirecek bir eylemi de içeren yapılandırılmış JSON
+formatındadır:
 
 ```json
 {
@@ -51,9 +52,9 @@ geçersiz/bozuk JSON üretmesi (`OllamaParseException`) ayrı ayrı yakalanır; 
 ## 5. Kurulum
 
 ### Ollama
-1. [ollama.com](https://ollama.com/) üzerinden Ollama'yı kurun.
-2. Kullanılacak modeli indirin: `ollama pull llama3.2:1b` (veya Phi-3 Mini / Gemma-2-2B).
-3. Ollama sunucusunun `http://localhost:11434` adresinde çalıştığını doğrulayın.
+1. [ollama.com](https://ollama.com/) üzerinden Ollama'yı kurun (Windows'ta `winget install Ollama.Ollama` ile de kurulabilir).
+2. Kullanılacak modeli indirin: `ollama pull llama3.2:3b` (daha zayıf donanımda `llama3.2:1b` veya Gemma-2-2B'ye düşülebilir).
+3. Ollama kurulumdan sonra arka planda otomatik başlar; `http://localhost:11434/api/version` adresine istek atarak doğrulanabilir.
 
 ### ML-Agents (companion eğitimi için)
 1. Python 3.10+ ortamında: `pip install mlagents`
