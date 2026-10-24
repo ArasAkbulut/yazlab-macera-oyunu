@@ -41,17 +41,20 @@ namespace WesternAdventure.EditorTools
                 tunnelGate.AddComponent<TunnelGateController>();
             }
 
-            // 2) Lever'a ulaşma algılama bölgesi (LeverHandle'ın kendi collider'ına dokunmadan,
-            //    yeni bir trigger child objesi olarak)
-            Transform existingTrigger = leverHandle.transform.Find("LeverTriggerZone");
-            GameObject triggerGO = existingTrigger != null ? existingTrigger.gameObject : new GameObject("LeverTriggerZone");
-            triggerGO.transform.SetParent(leverHandle.transform, false);
-            triggerGO.transform.localPosition = Vector3.zero;
+            // 2) Lever'a ulaşma algılama bölgesi. ÖNEMLİ: LeverHandle'ın kendi scale'i çok küçük
+            //    (0.1, 0.6, 0.1) olduğundan, bunu child yaparsak collider'ın gerçek dünya
+            //    yarıçapı da küçülüyordu (bug). Bu yüzden bağımsız, scale'i 1 olan kök seviye
+            //    bir obje olarak, LeverHandle'ın dünya konumuna yerleştiriyoruz.
+            GameObject triggerGO = GameObject.Find("LeverTriggerZone");
+            if (triggerGO == null) triggerGO = new GameObject("LeverTriggerZone");
+            triggerGO.transform.SetParent(null, true);
+            triggerGO.transform.position = leverHandle.transform.position;
+            triggerGO.transform.localScale = Vector3.one;
 
             var triggerCollider = triggerGO.GetComponent<SphereCollider>();
             if (triggerCollider == null) triggerCollider = triggerGO.AddComponent<SphereCollider>();
             triggerCollider.isTrigger = true;
-            triggerCollider.radius = 8f; // LeverHandle local scale küçük olduğundan geniş bir yarıçap
+            triggerCollider.radius = 8f;
 
             if (triggerGO.GetComponent<TargetZone>() == null)
             {
@@ -73,6 +76,19 @@ namespace WesternAdventure.EditorTools
 
             var companionAgent = companionGO.GetComponent<CompanionAgent>();
             SetPrivateField(companionAgent, "obstacleTarget", triggerGO.transform);
+
+            // 4) GEÇİCİ test zemini: bu alandaki terrain/collider arkadaş tarafından henüz
+            //    bitmediği için (kendi notlarında da belirtmiş), test sırasında köpeğin
+            //    boşluğa düşmemesi için görünmez bir platform. Gerçek zemin tamamlanınca silinmeli.
+            GameObject tempFloor = GameObject.Find("TEMP_LeverTestFloor");
+            if (tempFloor == null)
+            {
+                tempFloor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                tempFloor.name = "TEMP_LeverTestFloor";
+                Object.DestroyImmediate(tempFloor.GetComponent<MeshRenderer>());
+            }
+            tempFloor.transform.position = new Vector3(leverHandle.transform.position.x, 0f, leverHandle.transform.position.z - 5f);
+            tempFloor.transform.localScale = new Vector3(20f, 1f, 25f);
 
             Directory_CreateDirectoryForScenes();
             EditorSceneManager.SaveScene(scene, ScenePath);
