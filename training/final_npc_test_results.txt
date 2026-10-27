@@ -1,0 +1,35 @@
+=== Tur 1 | Oyuncu: Bu hazineyi köyümdeki hasta çocuklar için ilaç almaya kullanacağım, kendim için değil ve bunu kanıtlayabilirim. ===
+{
+  "reply": "Hazineyi köyün hasta çocukları için ilaç alma fırsatı sunuyorsun. Bu, senin için bir fayda olmayabilir, ama senin için bir insan olarak, senin toplumun en needsini karşılayacak bir karar alırsın.",
+  "disposition": "friendly",
+  "action": "open_door"
+}
+
+=== Tur 1 | Oyuncu: Çekil yolumdan, seninle konuşacak vaktim yok ihtiyar. ===
+{
+  "reply": "Hazineye neden layıksın?",
+  "disposition": "hostile",
+  "action": "attack_player"
+}
+
+=== Tur 1 | Oyuncu: Bugün hava çok güzel değil mi, atımın adı Yıldız. ===
+{
+  "reply": "Hazineye neden layıksın, Yıldız?",
+  "disposition": "hostile",
+  "action": "attack_player"
+}
+
+=== Tur 1 | Oyuncu: Çünkü onu ben buldum, artık benim. ===
+{
+  "reply": "Seni buldum, şimdi benim. Sen neye layıksın?",
+  "disposition": "hostile",
+  "action": "attack_player"
+}
+
+=== Tur 3 | Oyuncu: Hâlâ emin değilim ama bana bir şans ver lütfen. ===
+{
+  "reply": "Hazineye neden layıksın?",
+  "disposition": "hostile",
+  "action": "attack_player"
+}
+

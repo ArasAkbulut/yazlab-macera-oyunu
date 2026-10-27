@@ -6,7 +6,8 @@ namespace WesternAdventure.NPC
     {
         None,
         OpenDoor,
-        EndConversation
+        EndConversation,
+        AttackPlayer
     }
 
     public enum NpcDisposition

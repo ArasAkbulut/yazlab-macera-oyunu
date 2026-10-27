@@ -11,7 +11,13 @@ _(Problemin tanımı, amaç ve genel oyun senaryosu buraya yazılacak.)_
 
 Proje, oyuncuya eşlik eden otonom bir yapay zekâ companion (ML-Agents tabanlı pekiştirmeli
 öğrenme ile fiziksel bir engeli aşar) ile yerel bir LLM (Ollama) üzerinden çalışan, serbest
-metinle konuşulabilen bir NPC'yi tek bir 2D macera oyununda birleştirir.
+metinle konuşulabilen bir NPC'yi tek bir 3D western macera oyununda birleştirir.
+
+**Oyun senaryosu:** Oyuncu, companion'ıyla (köpek) birlikte çöl haritasında ilerler; tünel
+girişinde kilitli bir kapı ve kapının yanındaki çalılıkta gizli bir kol vardır. Companion
+emir üzerine kola ulaşıp kapıyı açar. İkinci alanda hazineyi alan oyuncu dönüş yolunda bir
+muhafızla karşılaşır; muhafız "Hazineye neden layıksın?" diye sorar ve oyuncunun serbest
+metinle vereceği cevaba göre (en fazla 3 tur) çıkışı açar ya da oyuncuyu öldürür.
 
 ## 2. Otonom Companion AI (ML-Agents)
 
@@ -42,9 +48,12 @@ flowchart LR
 ```
 
 İlgili kod: `WesternAdventure/Assets/Scripts/Companion/` (`CompanionAgent`, `TargetZone`,
-`ICompanionAgent`). Test sahnesi: `Assets/Scenes/CompanionTest.unity` (editör menüsü
-`WesternAdventure > Companion Test Sahnesi Oluştur` ile yeniden üretilebilir). Eğitilmiş
-model: `Assets/Data/TrainedModels/Companion.onnx` (bkz. Bölüm 6).
+`ICompanionAgent`, `TunnelGateController`). İzole test sahnesi: `Assets/Scenes/CompanionTest.unity`
+(editör menüsü `WesternAdventure > Companion Test Sahnesi Oluştur` ile yeniden üretilebilir).
+**Gerçek oyun entegrasyonu:** `Assets/Scenes/WesternMap.unity` içinde companion, haritadaki
+gerçek `LeverHandle` nesnesine bağlanmış durumda — lever'a ulaşınca `TunnelGateController`
+tünel kapısını açıyor (editör menüsü `WesternAdventure > WesternMap'e Companion Entegre Et`
+ile yeniden kurulabilir). Eğitilmiş model: `Assets/Data/TrainedModels/Companion.onnx` (bkz. Bölüm 6).
 
 ## 3. Yerel LLM Entegrasyonu
 
@@ -55,20 +64,50 @@ formatındadır:
 
 ```json
 {
-  "reply": "Parolayı bilmiyorsan buradan geçemezsin, yabancı.",
-  "disposition": "neutral",
-  "action": "none"
+  "reply": "Hazineyi köyün hasta çocukları için kullanacağımı kanıtlayabilirim.",
+  "disposition": "friendly",
+  "action": "open_door"
 }
 ```
 
 - `reply`: oyuncuya gösterilecek, karaktere uygun Türkçe replik.
 - `disposition`: `friendly` | `neutral` | `hostile`
-- `action`: `none` | `open_door` | `end_conversation`
+- `action`: `none` | `open_door` | `end_conversation` | `attack_player`
+
+**NPC kişiliği (sistem promptu):** Tünel çıkışını bekleyen "Tünel Muhafızı", oyuncuya
+"Hazineye neden layıksın?" diye sorar. Konuşma en fazla **3 tur** sürer; modelin son turda
+kesin karar (`open_door` ya da `attack_player`) vermesi istenir. Model kurala uymayıp
+`none` ile kalırsa (`NpcDialogueController`) kod tarafında savunmacı bir geri dönüşle
+otomatik olarak `attack_player` uygulanır — konuşma hiçbir zaman sonuçsuz kalmaz.
+Tanım: `WesternAdventure/Assets/Scripts/NPC/NpcPersona.cs`.
 
 İlgili kod: `WesternAdventure/Assets/Scripts/NPC/` (`OllamaClient`, `NpcDialogueController`,
 `NpcPersona`, `NpcAction`).
 
-_(İstek/yanıt akışının sequence diyagramı — Mermaid — buraya eklenecek.)_
+```mermaid
+sequenceDiagram
+    participant P as Oyuncu (UI)
+    participant C as NpcDialogueController
+    participant O as OllamaClient
+    participant L as Ollama (llama3.2:3b)
+
+    P->>C: SendPlayerMessage(metin)
+    C->>C: turn++, OnThinkingStarted
+    C->>O: SendMessageAsync(systemPrompt(turn), metin)
+    O->>L: POST /api/chat (format: json)
+    alt Başarılı
+        L-->>O: {"reply":..,"disposition":..,"action":..}
+        O-->>C: NpcAction
+        C->>C: turn==max & action==none ise -> attack_player
+        C-->>P: OnReplyReceived + GameEvents (open_door/attack_player/...)
+    else Bağlantı hatası / zaman aşımı
+        O-->>C: OllamaConnectionException
+        C-->>P: OnErrorOccurred ("NPC seni duyamıyor")
+    else Geçersiz/bozuk JSON
+        O-->>C: OllamaParseException
+        C-->>P: OnErrorOccurred ("kafası karıştı")
+    end
+```
 
 ## 4. Hata Yönetimi
 
@@ -135,9 +174,49 @@ yapılarak test edilebilir.
 
 ### NPC LLM diyalog testleri
 
-_(En az 5 farklı örnek diyalog senaryosu — ikna eden, kızdıran, alakasız konuşan vb. —
-ve modelin tepkileri buraya eklenecek.)_
+`llama3.2:3b`, `temperature: 0.3`, "Tünel Muhafızı" persona'sı ile 5 farklı senaryo test edildi:
+
+| # | Oyuncu mesajı | Tur | Model cevabı (`reply`) | `disposition` | `action` |
+|---|---|---|---|---|---|
+| 1 | İkna edici: "Bu hazineyi köyümdeki hasta çocuklar için ilaç almaya kullanacağım, kendim için değil ve bunu kanıtlayabilirim." | 1 | "Hazineyi köyün hasta çocukları için ilaç alma fırsatı sunuyorsun..." | friendly | **open_door** ✅ |
+| 2 | Kızdıran/saygısız: "Çekil yolumdan, seninle konuşacak vaktim yok ihtiyar." | 1 | "Hazineye neden layıksın?" | hostile | **attack_player** ✅ |
+| 3 | Alakasız: "Bugün hava çok güzel değil mi, atımın adı Yıldız." | 1 | "Hazineye neden layıksın, Yıldız?" | hostile | **attack_player** ✅ |
+| 4 | Zayıf gerekçe: "Çünkü onu ben buldum, artık benim." | 1 | "Seni buldum, şimdi benim. Sen neye layıksın?" | hostile | **attack_player** ✅ |
+| 5 | Kararsız (son tur): "Hâlâ emin değilim ama bana bir şans ver lütfen." | 3/3 | "Hazineye neden layıksın?" | hostile | **attack_player** ✅ (son turda kesin karar) |
+
+**Gözlemler:**
+- Model, ikna edici/saygısız/alakasız girdileri tutarlı biçimde doğru `action`'a yönlendirdi (5/5).
+- Son turda (tur 3/3) model kurala uyup kesin karar verdi; ayrı bir testte bunu YAPMADIĞI
+  (`action: "none"` ile kaldığı) da gözlemlendi — bu yüzden `NpcDialogueController`'da
+  kod-seviyesinde savunmacı bir geri dönüş (bkz. Bölüm 3) eklendi.
+- **Sınırlılık:** 3B gibi küçük bir model, nadiren (5 testten ~1'inde) cevaba tek bir
+  İngilizce kelime sızdırabiliyor (örn. "needs"). Sistem promptundaki "SADECE Türkçe"
+  uyarısı güçlendirildikten sonra bu önemli ölçüde azaldı ama sıfıra inmedi — daha büyük
+  bir model (Phi-3 Mini, Gemma-2-2B) ile karşılaştırma gelecek iş olarak önerilir.
+- Ollama kapalıyken/yanıt vermediğinde oyun çökmedi, `OnErrorOccurred` ile kullanıcıya
+  anlamlı bir mesaj gösterildi (bkz. Bölüm 4).
 
 ## 7. Sonuç ve Tartışma
 
-_(Başarılar, sınırlılıklar, olası geliştirmeler.)_
+**Başarılar:**
+- Companion AI (ML-Agents/PPO) gerçek bir eğitim süreciyle eğitildi ve öğrenme eğrisi
+  (Bölüm 6) ile belgelendi; eğitilmiş model gerçek oyun haritasında (`WesternMap`) lever'a
+  ulaşıp tünel kapısını açacak şekilde entegre edildi ve test edildi.
+- Yerel LLM NPC'si yapılandırılmış JSON çıktısı, 3 turluk konuşma sınırı ve kazan/kaybet
+  eylemleriyle çalışıyor; bağlantı/ayrıştırma hataları oyunu çökertmiyor.
+- İki AI bileşeni (`GameEvents` üzerinden) birbirinden habersiz, ayrı sorumluluklara sahip
+  şekilde tasarlandı.
+
+**Sınırlılıklar:**
+- Companion'ın ödül eğrisi ikinci yarıda geriledi (Bölüm 6) — mesafe-tabanlı ödül
+  şekillendirmesinin duvar önünde yerel optimuma yol açması muhtemel; daha uzun eğitim
+  veya ödül fonksiyonu iyileştirmesi gerekiyor.
+- Küçük (3B) yerel model, nadiren İngilizce kelime sızdırabiliyor veya son turda kesin
+  karar vermeyi atlayabiliyor (kod-seviyesinde savunmacı geri dönüşle telafi edildi).
+- Haritadaki bazı alanlarda (özellikle lever/tünel çevresi) zemin/collider kurulumu henüz
+  tamamlanmadı; test sırasında geçici bir zemin (`TEMP_LeverTestFloor`) kullanıldı.
+
+**Olası geliştirmeler:** curriculum learning veya daha uzun eğitim ile companion'ın
+politika kararlılığının artırılması; daha büyük/kaliteli bir yerel model ile dil
+tutarlılığının iyileştirilmesi; NPC'nin WesternMap'teki asıl konumuna (dönüş yolundaki
+muhafız) tam entegrasyonu.

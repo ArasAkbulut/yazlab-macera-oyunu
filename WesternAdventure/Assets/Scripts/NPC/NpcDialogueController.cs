@@ -24,10 +24,17 @@ namespace WesternAdventure.NPC
 
         private IOllamaClient _client;
         private CancellationTokenSource _activeRequest;
+        private int _currentTurn;
 
         private void Awake()
         {
             _client = new OllamaClient(ollamaBaseUrl, modelName, timeoutSeconds);
+        }
+
+        /// <summary>Konuşmayı baştan başlatmak için (ör. yeni bir oyuncu karşılaşması) çağrılabilir.</summary>
+        public void ResetConversation()
+        {
+            _currentTurn = 0;
         }
 
         /// <summary>UI'dan (örn. bir input alanının submit olayından) çağrılır.</summary>
@@ -43,15 +50,27 @@ namespace WesternAdventure.NPC
             _activeRequest = new CancellationTokenSource();
             CancellationToken token = _activeRequest.Token;
 
+            _currentTurn++;
             OnThinkingStarted?.Invoke();
 
             try
             {
-                NpcAction result = await _client.SendMessageAsync(persona.BuildSystemPrompt(), playerText, token);
+                string systemPrompt = persona.BuildSystemPrompt(_currentTurn);
+                NpcAction result = await _client.SendMessageAsync(systemPrompt, playerText, token);
                 if (token.IsCancellationRequested) return;
 
+                NpcActionType actionType = result.GetActionType();
+
+                // Model son turda da kesin bir karara varmazsa (kurala uymazsa), güvenli bir
+                // varsayılana düş: oyuncu ikna edemedi sayılır. Oyunun sonsuza dek "none"da
+                // takılı kalmaması için savunmacı bir geri dönüş.
+                if (actionType == NpcActionType.None && _currentTurn >= persona.MaxConversationTurns)
+                {
+                    actionType = NpcActionType.AttackPlayer;
+                }
+
                 OnReplyReceived?.Invoke(result);
-                ApplyAction(result.GetActionType());
+                ApplyAction(actionType);
             }
             catch (OperationCanceledException)
             {
@@ -80,6 +99,11 @@ namespace WesternAdventure.NPC
             {
                 case NpcActionType.OpenDoor:
                     GameEvents.RaiseNpcUnlockedDoor();
+                    GameEvents.RaiseDialogueEnded();
+                    break;
+                case NpcActionType.AttackPlayer:
+                    GameEvents.RaiseNpcAttackedPlayer();
+                    GameEvents.RaiseDialogueEnded();
                     break;
                 case NpcActionType.EndConversation:
                     GameEvents.RaiseDialogueEnded();
