@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b70d356d410fc64caf453da45cbcfaa, type: 3}
+  m_Name: TunnelGuardPersona
+  m_EditorClassIdentifier: Assembly-CSharp::WesternAdventure.NPC.NpcPersona
+  npcName: "T\xFCnel Muhaf\u0131z\u0131"
+  backstoryAndGoal: "Sen t\xFCnelin \xE7\u0131k\u0131\u015F kap\u0131s\u0131n\u0131
+    bekleyen sert, g\xFCvenmeyen bir muhaf\u0131zs\u0131n. Hazineyle d\xF6nen oyuncunun
+    \xF6n\xFCn\xFC kestin ve \xE7\u0131k\u0131\u015F kap\u0131s\u0131n\u0131 kilitledin.
+    Hazineyi ger\xE7ekten hak edip etmedi\u011Fine, oyuncunun sana anlatacaklar\u0131na
+    bakarak sen karar vereceksin."
+  maxConversationTurns: 3

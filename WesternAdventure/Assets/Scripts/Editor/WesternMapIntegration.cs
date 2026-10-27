@@ -1,10 +1,16 @@
+using System.IO;
 using Unity.MLAgents;
 using Unity.MLAgents.Policies;
 using Unity.MLAgents.Sensors;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
+using UnityEngine.UI;
 using WesternAdventure.Companion;
+using WesternAdventure.NPC;
+using WesternAdventure.UI;
 
 namespace WesternAdventure.EditorTools
 {
@@ -105,6 +111,135 @@ namespace WesternAdventure.EditorTools
                 "Behavior Type: Inference Only yaparsan eğitilmiş modelle çalışır.\n" +
                 "Ayrıca CompanionDog'u Player'ın yanına görsel olarak yerleştirmeyi/köpek modeliyle " +
                 "değiştirmeyi unutma (şu an CharacterController'lı boş bir obje).");
+        }
+
+        private const string GuardPersonaPath = "Assets/Data/NpcPersonas/TunnelGuardPersona.asset";
+
+        /// <summary>
+        /// Muhafız NPC'sini WesternMap'e yerleştirir. ÖNEMLİ: Arkadaşın planına göre bu NPC'nin
+        /// asıl yeri "ikinci alanda patron dövüşü sonrası dönüş yolu" — bu alan henüz
+        /// haritada yok. Bu yüzden şimdilik TunnelGate'in hemen ötesine, geçici bir konuma
+        /// yerleştiriyoruz; o alan hazır olunca sadece TunnelGuard'ı taşımak yeterli olacak.
+        /// </summary>
+        [MenuItem("WesternAdventure/WesternMap'e NPC Muhafız Entegre Et")]
+        public static void IntegrateNpc()
+        {
+            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+
+            GameObject tunnelGate = GameObject.Find("TunnelGate");
+            if (tunnelGate == null)
+            {
+                Debug.LogError("TunnelGate bulunamadı — sahne yapısı değişmiş olabilir.");
+                return;
+            }
+
+            NpcPersona persona = GetOrCreateGuardPersona();
+
+            // 1) EventSystem (yoksa)
+            if (Object.FindFirstObjectByType<EventSystem>() == null)
+            {
+                new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+            }
+
+            // 2) Muhafız NPC objesi — GEÇİCİ konum: TunnelGate'in biraz ötesi.
+            GameObject guardGO = GameObject.Find("TunnelGuard");
+            bool isNew = guardGO == null;
+            if (isNew)
+            {
+                guardGO = new GameObject("TunnelGuard", typeof(NpcDialogueController));
+            }
+            guardGO.transform.position = tunnelGate.transform.position + new Vector3(0f, 0f, 15f);
+
+            var dialogueController = guardGO.GetComponent<NpcDialogueController>();
+            SetPrivateField(dialogueController, "persona", persona);
+
+            // 3) Diyalog UI (geçici Canvas — arkadaşın asıl oyun UI'ı hazır olunca bununla
+            //    değiştirilmeli; şimdilik AI mantığını test edilebilir kılmak için var)
+            GameObject canvasGO = GameObject.Find("TunnelGuardDialogueCanvas");
+            if (canvasGO == null)
+            {
+                canvasGO = new GameObject("TunnelGuardDialogueCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+                canvasGO.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
+
+                Text replyText = CreateLabel(canvasGO.transform, "ReplyText", new Vector2(0, 150), new Vector2(700, 120), "Muhafız: \"Hazineye neden layıksın?\"");
+                Text thinkingText = CreateLabel(canvasGO.transform, "ThinkingIndicator", new Vector2(0, 70), new Vector2(300, 40), "Düşünüyor...");
+                thinkingText.gameObject.SetActive(false);
+                Text errorText = CreateLabel(canvasGO.transform, "ErrorText", new Vector2(0, 30), new Vector2(700, 40), string.Empty);
+                errorText.color = Color.red;
+
+                var resources = new DefaultControls.Resources();
+                GameObject inputGO = DefaultControls.CreateInputField(resources);
+                inputGO.transform.SetParent(canvasGO.transform, false);
+                inputGO.name = "PlayerInputField";
+                SetRect(inputGO.GetComponent<RectTransform>(), new Vector2(-110, -300), new Vector2(420, 40));
+
+                GameObject buttonGO = DefaultControls.CreateButton(resources);
+                buttonGO.transform.SetParent(canvasGO.transform, false);
+                buttonGO.name = "SendButton";
+                SetRect(buttonGO.GetComponent<RectTransform>(), new Vector2(260, -300), new Vector2(140, 40));
+                buttonGO.GetComponentInChildren<Text>().text = "Gönder";
+
+                var dialogueUI = guardGO.GetComponent<DialogueUI>();
+                if (dialogueUI == null) dialogueUI = guardGO.AddComponent<DialogueUI>();
+                SetPrivateField(dialogueUI, "dialogueController", dialogueController);
+                SetPrivateField(dialogueUI, "replyText", replyText);
+                SetPrivateField(dialogueUI, "thinkingIndicator", thinkingText.gameObject);
+                SetPrivateField(dialogueUI, "errorText", errorText);
+
+                var harness = guardGO.GetComponent<DialogueTestHarness>();
+                if (harness == null) harness = guardGO.AddComponent<DialogueTestHarness>();
+                SetPrivateField(harness, "dialogueController", dialogueController);
+                SetPrivateField(harness, "playerInput", inputGO.GetComponent<InputField>());
+                SetPrivateField(harness, "sendButton", buttonGO.GetComponent<Button>());
+
+                canvasGO.SetActive(false); // oyuncu muhafızın yanına gelene kadar gizli kalsın
+            }
+
+            Directory_CreateDirectoryForScenes();
+            EditorSceneManager.SaveScene(scene, ScenePath);
+
+            Debug.Log(
+                "WesternMap'e NPC muhafız entegrasyonu tamamlandı.\n" +
+                "ÖNEMLİ: TunnelGuard şu an TunnelGate'in 15 birim ötesinde GEÇİCİ bir konumda — " +
+                "arkadaşın 'ikinci alan + patron + dönüş yolu' kısmını bitirince buraya taşınmalı.\n" +
+                "Diyalog Canvas'ı (TunnelGuardDialogueCanvas) şu an gizli; test etmek için Hierarchy'den " +
+                "elle aktif hale getirip Play'e basabilirsin (gerçek oyunda bu, oyuncu muhafıza " +
+                "yaklaşınca bir trigger ile açılmalı — henüz yazılmadı).\n" +
+                "Cursor kilidi: ThirdPersonCamera Play'de fareyi kilitliyor, UI ile etkileşim için " +
+                "Escape'e basıp imleci serbest bırakman gerekebilir.");
+        }
+
+        private static NpcPersona GetOrCreateGuardPersona()
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<NpcPersona>(GuardPersonaPath);
+            if (existing != null) return existing;
+
+            Directory.CreateDirectory("Assets/Data/NpcPersonas");
+            var persona = ScriptableObject.CreateInstance<NpcPersona>();
+            AssetDatabase.CreateAsset(persona, GuardPersonaPath);
+            AssetDatabase.SaveAssets();
+            return persona;
+        }
+
+        private static Text CreateLabel(Transform parent, string name, Vector2 anchoredPos, Vector2 size, string text)
+        {
+            var go = new GameObject(name, typeof(Text));
+            go.transform.SetParent(parent, false);
+            var label = go.GetComponent<Text>();
+            label.text = text;
+            label.alignment = TextAnchor.MiddleCenter;
+            label.color = Color.white;
+            label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            SetRect(go.GetComponent<RectTransform>(), anchoredPos, size);
+            return label;
+        }
+
+        private static void SetRect(RectTransform rect, Vector2 anchoredPos, Vector2 size)
+        {
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = anchoredPos;
+            rect.sizeDelta = size;
         }
 
         private static void Directory_CreateDirectoryForScenes()
