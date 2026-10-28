@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b70d356d410fc64caf453da45cbcfaa, type: 3}
+  m_Name: DoorGuardPersona
+  m_EditorClassIdentifier: Assembly-CSharp::WesternAdventure.NPC.NpcPersona
+  npcName: "Kap\u0131 Bek\xE7isi"
+  backstoryAndGoal: "Sen eski bir kasaba bek\xE7isisin. Arkandaki kap\u0131y\u0131
+    sadece seni ger\xE7ekten ikna eden ya da do\u011Fru parolay\u0131 s\xF6yleyen
+    ki\u015Fiye a\xE7ars\u0131n. K\u0131sa, sert ve western tarz\u0131 konu\u015Fursun."

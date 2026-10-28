@@ -107,3 +107,11 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# Python virtual environment for ML-Agents training (local only, not shared)
+/training/venv/
+/training/venv310/
+/training/ml-agents-src/
+/training/results/
+__pycache__/
+*.pyc
