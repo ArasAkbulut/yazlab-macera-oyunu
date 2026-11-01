@@ -113,6 +113,47 @@ namespace WesternAdventure.EditorTools
                 "değiştirmeyi unutma (şu an CharacterController'lı boş bir obje).");
         }
 
+        private const string GuardModelPath = "Assets/Characters/TunnelGuard.fbx";
+
+        /// <summary>
+        /// Mixamo'dan indirilen görsel modeli (TunnelGuard.fbx) TunnelGuard objesinin
+        /// altına ekler, böylece NPC artık ekranda görünür olur.
+        /// </summary>
+        [MenuItem("WesternAdventure/TunnelGuard Görselini Bağla")]
+        public static void AttachGuardVisual()
+        {
+            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+
+            GameObject guardGO = GameObject.Find("TunnelGuard");
+            if (guardGO == null)
+            {
+                Debug.LogError("TunnelGuard bulunamadı — önce 'WesternMap'e NPC Muhafız Entegre Et' çalıştırılmalı.");
+                return;
+            }
+
+            Transform existingVisual = guardGO.transform.Find("TunnelGuardModel");
+            if (existingVisual != null)
+            {
+                Object.DestroyImmediate(existingVisual.gameObject);
+            }
+
+            var modelAsset = AssetDatabase.LoadAssetAtPath<GameObject>(GuardModelPath);
+            if (modelAsset == null)
+            {
+                Debug.LogError($"Model bulunamadı: {GuardModelPath}");
+                return;
+            }
+
+            GameObject visual = (GameObject)PrefabUtility.InstantiatePrefab(modelAsset, scene);
+            visual.name = "TunnelGuardModel";
+            visual.transform.SetParent(guardGO.transform, false);
+            visual.transform.localPosition = Vector3.zero;
+            visual.transform.localRotation = Quaternion.identity;
+
+            EditorSceneManager.SaveScene(scene, ScenePath);
+            Debug.Log("TunnelGuard görseli bağlandı.");
+        }
+
         private const string GuardPersonaPath = "Assets/Data/NpcPersonas/TunnelGuardPersona.asset";
 
         /// <summary>
