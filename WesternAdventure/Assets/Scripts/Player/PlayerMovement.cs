@@ -19,6 +19,8 @@ public class PlayerMovement : MonoBehaviour
 
     private CharacterController controller;
     private Animator animator;
+    private PlayerHealth playerHealth;
+
     private float verticalSpeed;
     private float originalStepOffset;
 
@@ -32,6 +34,7 @@ public class PlayerMovement : MonoBehaviour
     {
         controller = GetComponent<CharacterController>();
         animator = GetComponentInChildren<Animator>();
+        playerHealth = GetComponent<PlayerHealth>();
 
         controller.slopeLimit = maxSlopeAngle;
         originalStepOffset = controller.stepOffset;
@@ -50,11 +53,14 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
+        bool isDead = playerHealth != null && playerHealth.IsDead;
+
         Keyboard keyboard = Keyboard.current;
         Vector2 input = Vector2.zero;
         bool sprinting = false;
 
-        if (keyboard != null)
+        // Oyuncu öldüyse hareket tuþlarýný okuma.
+        if (!isDead && keyboard != null)
         {
             if (keyboard.wKey.isPressed) input.y += 1f;
             if (keyboard.sKey.isPressed) input.y -= 1f;
@@ -80,14 +86,16 @@ public class PlayerMovement : MonoBehaviour
             Vector3.Angle(groundHit.normal, Vector3.up)
                 > maxSlopeAngle;
 
-        // Yalnizca yurunebilir zeminde dususu sifirla.
+        // Yalnýzca yürünebilir zeminde düþüþü sýfýrla.
         if (walkableGround)
         {
             verticalSpeed = -2f;
         }
 
-        // Duvar veya dik egim yeni bir ziplama hakki vermez.
-        if (keyboard != null &&
+        // Ölü oyuncu zýplayamaz.
+        // Duvar veya dik eðim yeni bir zýplama hakký vermez.
+        if (!isDead &&
+            keyboard != null &&
             keyboard.spaceKey.wasPressedThisFrame &&
             walkableGround)
         {
@@ -95,10 +103,11 @@ public class PlayerMovement : MonoBehaviour
             walkableGround = false;
         }
 
+        // Ölümden sonra da yerçekimi çalýþmaya devam eder.
         verticalSpeed += gravity * Time.deltaTime;
         verticalSpeed = Mathf.Max(verticalSpeed, -40f);
 
-        // Havadayken basamak tirmanmasini engelle.
+        // Havadayken basamak týrmanmasýný engelle.
         controller.stepOffset =
             walkableGround ? originalStepOffset : 0f;
 
@@ -129,7 +138,7 @@ public class PlayerMovement : MonoBehaviour
 
         if (touchingSteepSurface)
         {
-            // Duvara veya dik yamaca dogru bastirmayi kaldir.
+            // Duvara veya dik yamaca doðru bastýrmayý kaldýr.
             Vector3 outward = new Vector3(
                 surfaceNormal.x, 0f, surfaceNormal.z
             ).normalized;
@@ -142,7 +151,7 @@ public class PlayerMovement : MonoBehaviour
                 horizontalVelocity -= outward * intoSurface;
             }
 
-            // Dusus sirasinda yamac boyunca asagi kay.
+            // Düþüþ sýrasýnda yamaç boyunca aþaðý kay.
             if (verticalSpeed <= 0f)
             {
                 Vector3 downhill =
@@ -171,7 +180,7 @@ public class PlayerMovement : MonoBehaviour
             Vector3.up * verticalSpeed +
             slideVelocity;
 
-        // Move sirasinda yeni temas bilgileri toplanir.
+        // Move sýrasýnda yeni temas bilgileri toplanýr.
         hasSteepContact = false;
 
         CollisionFlags collisions =
@@ -187,7 +196,7 @@ public class PlayerMovement : MonoBehaviour
         {
             animator.SetBool(
                 IsRunning,
-                input.sqrMagnitude > 0.001f
+                !isDead && input.sqrMagnitude > 0.001f
             );
         }
     }
@@ -223,14 +232,14 @@ public class PlayerMovement : MonoBehaviour
 
         foreach (RaycastHit hit in hits)
         {
-            // Kendi collider'larimizi zemin sayma.
+            // Kendi collider'larýmýzý zemin sayma.
             if (hit.collider == controller ||
                 hit.collider.transform.IsChildOf(transform))
             {
                 continue;
             }
 
-            // Baslangicta ic ice olan veya duvar olan temaslari atla.
+            // Baþlangýçta iç içe olan veya duvar olan temaslarý atla.
             if (hit.distance <= 0f || hit.normal.y <= 0.01f)
             {
                 continue;
@@ -251,7 +260,7 @@ public class PlayerMovement : MonoBehaviour
     {
         float angle = Vector3.Angle(hit.normal, Vector3.up);
 
-        // Tavanlari degil, dik yamac ve duvarlari kaydet.
+        // Tavanlarý deðil, dik yamaç ve duvarlarý kaydet.
         if (angle > maxSlopeAngle && hit.normal.y >= -0.01f)
         {
             steepContactNormal = hit.normal;
