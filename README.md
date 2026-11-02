@@ -2,8 +2,8 @@
 
 Yazılım Geliştirme Laboratuvarı I — Unity macera oyunu
 
-**Ekip:** _(isimler eklenecek)_
-**Tarih:** _(teslim tarihi: 6 Kasım 2026)_
+**Ekip:** Azra Akşahin, Aras Akbulut
+**Tarih:** 2 Kasım 2026 (teslim tarihi: 6 Kasım 2026)
 
 ## 1. Giriş
 
