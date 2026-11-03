@@ -154,6 +154,49 @@ namespace WesternAdventure.EditorTools
             Debug.Log("TunnelGuard görseli bağlandı.");
         }
 
+        private const string CompanionModelPath =
+            "Assets/Bublisher/3D Stylized Animated Dogs Kit/Prefabs/germanshepherd.prefab";
+
+        /// <summary>
+        /// Hazır German Shepherd modelini (Bublisher - 3D Stylized Animated Dogs Kit, ücretsiz)
+        /// CompanionDog objesinin altına ekler — arkadaşın kullandığı kovboy/golem modelleriyle
+        /// aynı PBR/stilize kalite seviyesinde olduğu için elle modellenen low-poly köpeğin yerini alır.
+        /// </summary>
+        [MenuItem("WesternAdventure/CompanionDog Görselini Bağla")]
+        public static void AttachCompanionVisual()
+        {
+            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+
+            GameObject companionGO = GameObject.Find("CompanionDog");
+            if (companionGO == null)
+            {
+                Debug.LogError("CompanionDog bulunamadı — önce 'WesternMap'e Companion Entegre Et' çalıştırılmalı.");
+                return;
+            }
+
+            Transform existingVisual = companionGO.transform.Find("CompanionDogModel");
+            if (existingVisual != null)
+            {
+                Object.DestroyImmediate(existingVisual.gameObject);
+            }
+
+            var modelAsset = AssetDatabase.LoadAssetAtPath<GameObject>(CompanionModelPath);
+            if (modelAsset == null)
+            {
+                Debug.LogError($"Model bulunamadı: {CompanionModelPath}");
+                return;
+            }
+
+            GameObject visual = (GameObject)PrefabUtility.InstantiatePrefab(modelAsset, scene);
+            visual.name = "CompanionDogModel";
+            visual.transform.SetParent(companionGO.transform, false);
+            visual.transform.localPosition = Vector3.zero;
+            visual.transform.localRotation = Quaternion.identity;
+
+            EditorSceneManager.SaveScene(scene, ScenePath);
+            Debug.Log("CompanionDog görseli bağlandı (German Shepherd).");
+        }
+
         private const string GuardPersonaPath = "Assets/Data/NpcPersonas/TunnelGuardPersona.asset";
 
         /// <summary>
