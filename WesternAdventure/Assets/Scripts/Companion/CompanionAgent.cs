@@ -24,6 +24,10 @@ namespace WesternAdventure.Companion
         [SerializeField] private float moveSpeed = 4f;
         [SerializeField] private float gravity = -20f;
         [SerializeField] private Transform obstacleTarget;
+        [Tooltip("Eğitim/test sahnelerinde true: her episode başında başlangıç noktasına döner ve " +
+                 "görevi tekrar dener. Gerçek oyun sahnesinde false: engeli bir kez aştıktan sonra " +
+                 "olduğu yerde kalır (sürekli başa ışınlanıp tekrar yürümez).")]
+        [SerializeField] private bool returnToStartOnEpisodeBegin = true;
 
         private CharacterController _controller;
         private Vector3 _startPosition;
@@ -40,6 +44,12 @@ namespace WesternAdventure.Companion
 
         public override void OnEpisodeBegin()
         {
+            if (!returnToStartOnEpisodeBegin)
+            {
+                IsBusy = false;
+                return;
+            }
+
             _controller.enabled = false;
             transform.position = _startPosition;
             _controller.enabled = true;

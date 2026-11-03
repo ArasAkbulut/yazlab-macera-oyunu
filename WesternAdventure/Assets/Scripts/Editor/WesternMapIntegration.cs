@@ -82,6 +82,9 @@ namespace WesternAdventure.EditorTools
 
             var companionAgent = companionGO.GetComponent<CompanionAgent>();
             SetPrivateField(companionAgent, "obstacleTarget", triggerGO.transform);
+            // Gerçek oyun sahnesinde köpek, kapıyı bir kez açtıktan sonra başlangıç noktasına
+            // ışınlanıp tekrar yürümeye başlamamalı — olduğu yerde kalmalı.
+            SetPrivateField(companionAgent, "returnToStartOnEpisodeBegin", false);
 
             // 4) GEÇİCİ test zemini: bu alandaki terrain/collider arkadaş tarafından henüz
             //    bitmediği için (kendi notlarında da belirtmiş), test sırasında köpeğin
@@ -339,6 +342,13 @@ namespace WesternAdventure.EditorTools
         {
             var so = new SerializedObject(target);
             so.FindProperty(fieldName).objectReferenceValue = value;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void SetPrivateField(Object target, string fieldName, bool value)
+        {
+            var so = new SerializedObject(target);
+            so.FindProperty(fieldName).boolValue = value;
             so.ApplyModifiedPropertiesWithoutUndo();
         }
     }
