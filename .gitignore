@@ -115,3 +115,11 @@ InitTestScene*.unity*
 /training/results/
 __pycache__/
 *.pyc
+# WesternAdventure - yerel Unity dosyalari
+/WesternAdventure/[Ll]ibrary/
+/WesternAdventure/LibraryBackUp/
+/WesternAdventure/Library_Backup*/
+/WesternAdventure/[Tt]emp/
+/WesternAdventure/[Oo]bj/
+/WesternAdventure/[Ll]ogs/
+/WesternAdventure/[Uu]ser[Ss]ettings/
