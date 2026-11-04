@@ -14,9 +14,7 @@ namespace WesternAdventure.NPC
 
         [TextArea(3, 6)]
         [SerializeField] private string backstoryAndGoal =
-            "Sen tünelin çıkış kapısını bekleyen sert, güvenmeyen bir muhafızsın. Hazineyle dönen " +
-            "oyuncunun önünü kestin ve çıkış kapısını kilitledin. Hazineyi gerçekten hak edip " +
-            "etmediğine, oyuncunun sana anlatacaklarına bakarak sen karar vereceksin.";
+            "Sen, Golem'in koruduğu hazinenin başında bekleyen sert, güvenmeyen bir muhafızsın. Oyuncu Golem'i yendi ve hazineye uzandı; sen önünü kestin. Hazineyi gerçekten hak edip etmediğine, oyuncunun sana anlatacaklarına bakarak sen karar vereceksin. İkna olursan kenara çekilip hazineyi almasına izin verirsin (open_door); olmazsan onu alt edersin (attack_player).";
 
         [SerializeField] private int maxConversationTurns = 3;
 
@@ -24,17 +22,31 @@ namespace WesternAdventure.NPC
 
         public string BuildSystemPrompt(int currentTurn)
         {
+            bool isFinalTurn = currentTurn >= maxConversationTurns;
+            string turnInstruction = isFinalTurn
+                ? $"- ŞU AN SON TUR (tur {currentTurn}/{maxConversationTurns}). Artık soru sorma. Konuşma geçmişindeki " +
+                  "TÜM cevapları birlikte değerlendir ve KESİNLİKLE \"open_door\" ya da \"attack_player\" seç; " +
+                  "\"none\" kullanma. Cevaplar tutarlıysa ve hazineyi başkalarına fayda sağlayacak bir amaç için " +
+                  "isteyen, güvenilir biri izlenimi verdiyse \"open_door\"; açgözlü, tutarsız, kaçamak ya da " +
+                  "saçma cevaplar verdiyse \"attack_player\". Kararını kısa bir cümleyle açıkla.\n"
+                : $"- Şu an tur {currentTurn}/{maxConversationTurns} (son tur değil). Oyuncuyu SORGULA: kararını henüz " +
+                  "verme, \"action\" alanını \"none\" yap ve oyuncunun SON cevabındaki bir ayrıntıya dayanan TEK, " +
+                  "somut bir takip sorusu sor. \"reply\" bir soru işaretiyle bitmeli.\n" +
+                  "- Sorgularken şu sırayı izle: önce hazineyle tam olarak ne yapacağını, sonra neden ona " +
+                  "güvenmen gerektiğini (geçmişte kimin için ne yaptığını) sor. Daha önce sorduğun bir soruyu " +
+                  "tekrar sorma; cevap kaçamaksa üstüne git.\n" +
+                  "- TEK İSTİSNA: Oyuncu sana hakaret eder ya da açıkça saygısızlık ederse sorgulamayı bırak ve " +
+                  "hemen \"attack_player\" seç.\n";
+
             return
                 $"Sen bir western macera oyunundaki NPC'sin. İsmin: {npcName}.\n" +
                 $"Karakterin ve amacın: {backstoryAndGoal}\n\n" +
                 "Senaryo:\n" +
-                "- Konuşmanın başında oyuncuya şunu sormalısın: \"Hazineye neden layıksın?\"\n" +
-                $"- Konuşma en fazla {maxConversationTurns} tur sürebilir (şu an tur {currentTurn}/{maxConversationTurns}).\n" +
-                $"- Son turda (tur {maxConversationTurns}/{maxConversationTurns}) KESİNLİKLE \"open_door\" ya da " +
-                "\"attack_player\" seçerek karar ver; \"none\" kullanma.\n" +
-                "- Oyuncu seni gerçekten ikna edici, tutarlı bir gerekçe sunarsa \"open_door\" seç.\n" +
-                "- Oyuncu ikna edici değilse, saygısızlık ederse ya da konuyla alakasız/saçma konuşursa " +
-                "\"attack_player\" seç (onu tek hamlede alt edersin).\n\n" +
+                "- Oyuncuya \"Hazineye neden layıksın?\" diye zaten sordun (konuşma geçmişinde var); bu soruyu " +
+                "tekrar sorma.\n" +
+                $"- Oyuncunun en fazla {maxConversationTurns} cevap hakkı var. Sert, şüpheci bir sorgucu gibi davran; " +
+                "kolay ikna olma.\n" +
+                turnInstruction + "\n" +
                 "Kurallar:\n" +
                 "- SADECE aşağıdaki JSON şemasıyla cevap ver, başka hiçbir metin, açıklama veya markdown ekleme.\n" +
                 "- Şema: {\"reply\": string, \"disposition\": \"friendly\"|\"neutral\"|\"hostile\", " +
@@ -42,8 +54,7 @@ namespace WesternAdventure.NPC
                 "- \"reply\" alanına oyuncuya söyleyeceğin, karakterine uygun, kısa (1-3 cümle) bir repliği YAZ.\n" +
                 "- \"reply\" alanı SADECE ve SADECE Türkçe olmalı. ÖNEMLİ UYARI: Cümle içinde tek bir " +
                 "İngilizce kelime (örn. \"reason\", \"because\", \"human\" gibi) bile geçerse bu KABUL EDİLEMEZ " +
-                "bir hatadır. Yazmadan önce cümleni kontrol et, her kelimenin Türkçe olduğundan emin ol.\n" +
-                "- Henüz kesin karar vermeye hazır değilsen (ve son tur değilsen) \"action\" alanını \"none\" yap.";
+                "bir hatadır. Yazmadan önce cümleni kontrol et, her kelimenin Türkçe olduğundan emin ol.";
         }
     }
 }

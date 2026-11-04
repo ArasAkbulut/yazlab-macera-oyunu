@@ -88,7 +88,7 @@ namespace WesternAdventure.EditorTools
             Debug.Log(
                 "Companion test sahnesi (3D) oluşturuldu: " + ScenePath + "\n" +
                 "ŞİMDİ ELLE YAPILMASI GEREKENLER (CompanionAgent objesini seç, Inspector'da):\n" +
-                "1) Behavior Parameters -> Behavior Name: 'Companion', Vector Observation Space Size: 9, " +
+                "1) Behavior Parameters -> Behavior Name: 'Companion', Vector Observation Space Size: 6, " +
                 "Continuous Actions: 2, Behavior Type: Default\n" +
                 "2) Decision Requester -> Decision Period: 5\n" +
                 "3) Ray Perception Sensor 3D -> Detectable Tags listesine 'Target' ekle " +
