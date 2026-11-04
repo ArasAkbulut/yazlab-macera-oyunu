@@ -165,6 +165,106 @@ namespace WesternAdventure.EditorTools
             Debug.Log("TunnelGuard görseli bağlandı.");
         }
 
+        private const string GuardTextureFolder = "Assets/Characters/TunnelGuardTextures";
+
+        /// <summary>
+        /// Mixamo Peasant Man modelinin dokuları FBX'e gömülü geliyor ve URP'de malzeme olarak
+        /// bağlanmadığı için muhafız bembeyaz görünüyordu. Dokuları dışarı çıkarır, URP/Lit
+        /// malzemesi oluşturur ve sahnedeki muhafızın tüm renderer'larına atar.
+        /// </summary>
+        [MenuItem("WesternAdventure/Muhafız Görselini Düzelt (Doku + URP Malzeme)")]
+        public static void FixGuardMaterials()
+        {
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+
+            var importer = AssetImporter.GetAtPath(GuardModelPath) as ModelImporter;
+            if (importer == null)
+            {
+                Debug.LogError($"Model bulunamadı: {GuardModelPath}");
+                return;
+            }
+
+            if (!AssetDatabase.IsValidFolder(GuardTextureFolder))
+            {
+                AssetDatabase.CreateFolder("Assets/Characters", "TunnelGuardTextures");
+            }
+            importer.ExtractTextures(GuardTextureFolder);
+            AssetDatabase.Refresh();
+
+            Texture2D diffuse = FindTexture("Peasant_Man_diffuse");
+            Texture2D normal = FindTexture("Peasant_Man_normal");
+            if (diffuse == null)
+            {
+                Debug.LogError("Peasant_Man_diffuse dokusu FBX'ten çıkarılamadı/bulunamadı.");
+                return;
+            }
+
+            if (normal != null)
+            {
+                var normalImporter = (TextureImporter)AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(normal));
+                if (normalImporter.textureType != TextureImporterType.NormalMap)
+                {
+                    normalImporter.textureType = TextureImporterType.NormalMap;
+                    normalImporter.SaveAndReimport();
+                }
+            }
+
+            string materialPath = GuardTextureFolder + "/TunnelGuard_URP.mat";
+            var material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+            Shader shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            if (material == null)
+            {
+                material = new Material(shader);
+                AssetDatabase.CreateAsset(material, materialPath);
+            }
+            material.shader = shader;
+            if (material.HasProperty("_BaseMap")) material.SetTexture("_BaseMap", diffuse);
+            if (material.HasProperty("_MainTex")) material.SetTexture("_MainTex", diffuse);
+            if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", Color.white);
+            if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", 0.2f);
+            if (normal != null && material.HasProperty("_BumpMap"))
+            {
+                material.SetTexture("_BumpMap", normal);
+                material.EnableKeyword("_NORMALMAP");
+            }
+            EditorUtility.SetDirty(material);
+            AssetDatabase.SaveAssets();
+
+            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            GameObject guardGO = GameObject.Find("TunnelGuard");
+            if (guardGO == null)
+            {
+                Debug.LogError("Sahnede TunnelGuard bulunamadı.");
+                return;
+            }
+
+            int count = 0;
+            foreach (Renderer r in guardGO.GetComponentsInChildren<Renderer>(true))
+            {
+                var mats = new Material[r.sharedMaterials.Length];
+                for (int i = 0; i < mats.Length; i++) mats[i] = material;
+                r.sharedMaterials = mats;
+                count++;
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene, ScenePath);
+            Debug.Log($"Muhafız malzemesi düzeltildi: {count} renderer'a {materialPath} atandı.");
+        }
+
+        private static Texture2D FindTexture(string name)
+        {
+            foreach (string guid in AssetDatabase.FindAssets($"{name} t:Texture2D"))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (Path.GetFileNameWithoutExtension(path) == name)
+                {
+                    return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                }
+            }
+            return null;
+        }
+
         private const string CompanionModelPath =
             "Assets/Bublisher/3D Stylized Animated Dogs Kit/Prefabs/germanshepherd.prefab";
 
@@ -203,6 +303,8 @@ namespace WesternAdventure.EditorTools
             visual.transform.SetParent(companionGO.transform, false);
             visual.transform.localPosition = Vector3.zero;
             visual.transform.localRotation = Quaternion.identity;
+            // Varsayılan boyutta oyuncunun yanında çok küçük kalıyordu.
+            visual.transform.localScale = Vector3.one * 1.4f;
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             Debug.Log("CompanionDog görseli bağlandı (German Shepherd).");
@@ -302,6 +404,210 @@ namespace WesternAdventure.EditorTools
                 "yaklaşınca bir trigger ile açılmalı — henüz yazılmadı).\n" +
                 "Cursor kilidi: ThirdPersonCamera Play'de fareyi kilitliyor, UI ile etkileşim için " +
                 "Escape'e basıp imleci serbest bırakman gerekebilir.");
+        }
+
+        /// <summary>
+        /// Muhafızı hazinenin (TreasurePlaceholder) başına taşır ve GuardEncounter ile bağlar:
+        /// boss yenilince oyuncu yaklaştığında diyalog otomatik açılır.
+        /// "WesternMap'e NPC Muhafız Entegre Et" daha önce çalıştırılmış olmalı.
+        /// </summary>
+        [MenuItem("WesternAdventure/Muhafızı Hazinenin Başına Yerleştir")]
+        public static void PlaceGuardAtTreasure()
+        {
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+
+            // Deaktif objeler GameObject.Find ile bulunamadığı için kök objeler üzerinden aranıyor.
+            GameObject FindRoot(string name)
+            {
+                foreach (GameObject root in scene.GetRootGameObjects())
+                {
+                    if (root.name == name) return root;
+                }
+                return null;
+            }
+
+            GameObject guardGO = FindRoot("TunnelGuard");
+            GameObject canvasGO = FindRoot("TunnelGuardDialogueCanvas");
+            GameObject treasure = FindRoot("TreasurePlaceholder");
+            GameObject player = FindRoot("Player");
+            if (guardGO == null || canvasGO == null || treasure == null || player == null)
+            {
+                Debug.LogError("TunnelGuard, TunnelGuardDialogueCanvas, TreasurePlaceholder veya Player " +
+                               "bulunamadı. Önce 'WesternMap'e NPC Muhafız Entegre Et' menüsünü çalıştır.");
+                return;
+            }
+
+            BossHealth bossHealth = Object.FindFirstObjectByType<BossHealth>(FindObjectsInactive.Include);
+            if (bossHealth == null)
+            {
+                Debug.LogWarning("Sahnede BossHealth bulunamadı — muhafız boss beklemeden konuşmaya hazır olacak.");
+            }
+
+            // Konum: hazinenin oyuncunun geldiği tarafında (boss -> hazine yönünün tersi), yüzü
+            // oyuncuya dönük. Yükseklik: eski konumdaki zemin-pivot farkı korunarak yeni zemine oturtulur.
+            Vector3 approachDir = bossHealth != null
+                ? bossHealth.transform.position - treasure.transform.position
+                : Vector3.left;
+            approachDir.y = 0f;
+            approachDir = approachDir.sqrMagnitude > 0.01f ? approachDir.normalized : Vector3.left;
+
+            float pivotOffset = GroundOffset(guardGO.transform.position, guardGO);
+            Vector3 target = treasure.transform.position + approachDir * 2.5f;
+            target.y = GroundHeight(target, guardGO) + pivotOffset;
+            guardGO.transform.position = target;
+            guardGO.transform.rotation = Quaternion.LookRotation(approachDir);
+
+            // Muhafız modeli oyuncuya göre çok küçük kalıyordu: görselin boyunu, oyuncunun
+            // görünen boyunun ~1.2 katına ölçekle (tek seferlik ölçüm, menü tekrar çalışsa da sabit).
+            Transform guardVisual = guardGO.transform.Find("TunnelGuardModel");
+            float playerHeight = VisibleHeight(player.transform);
+            if (guardVisual != null && playerHeight > 0.1f)
+            {
+                guardVisual.localScale = Vector3.one;
+                float guardHeight = VisibleHeight(guardVisual);
+                if (guardHeight > 0.1f)
+                {
+                    float factor = Mathf.Clamp(playerHeight * 1.2f / guardHeight, 0.5f, 5f);
+                    guardVisual.localScale = Vector3.one * factor;
+                    Debug.Log($"Muhafız görseli ölçeklendi: oyuncu {playerHeight:F2} m, muhafız {guardHeight:F2} m -> x{factor:F2}");
+                }
+            }
+
+            // Beyaz yazılar çöl zemininde okunmuyordu: panelin arkasına yarı saydam koyu bir zemin.
+            Transform background = canvasGO.transform.Find("DialogueBackground");
+            if (background == null)
+            {
+                var bgGO = new GameObject("DialogueBackground", typeof(Image));
+                bgGO.transform.SetParent(canvasGO.transform, false);
+                background = bgGO.transform;
+            }
+            background.SetAsFirstSibling();
+            var bgImage = background.GetComponent<Image>();
+            bgImage.color = new Color(0f, 0f, 0f, 0.65f);
+            bgImage.raycastTarget = false;
+
+            // Yerleşim ekranın ORTASINA göre sabit piksel idi; küçük Game penceresinde yazı
+            // kutusu (-300 px) ekranın dışında kalıyordu. Artık ekran boyutuyla ölçekleniyor ve
+            // her şey ekranın altına sabitli bir altyazı paneli gibi duruyor.
+            var scaler = canvasGO.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1280f, 720f);
+            scaler.matchWidthOrHeight = 0.5f;
+
+            var bgRect = (RectTransform)background;
+            bgRect.anchorMin = new Vector2(0f, 0f);
+            bgRect.anchorMax = new Vector2(1f, 0f);
+            bgRect.pivot = new Vector2(0.5f, 0f);
+            bgRect.anchoredPosition = new Vector2(0f, 10f);
+            bgRect.sizeDelta = new Vector2(-60f, 250f);
+
+            Text reply = FindChildComponent<Text>(canvasGO, "ReplyText");
+            if (reply != null)
+            {
+                reply.fontSize = 22;
+                reply.supportRichText = true;
+                reply.verticalOverflow = VerticalWrapMode.Overflow;
+                SetBottomRect(reply.transform, new Vector2(0f, 175f), new Vector2(1050f, 120f));
+            }
+            Text thinking = FindChildComponent<Text>(canvasGO, "ThinkingIndicator");
+            if (thinking != null) SetBottomRect(thinking.transform, new Vector2(0f, 100f), new Vector2(400f, 30f));
+            Text error = FindChildComponent<Text>(canvasGO, "ErrorText");
+            if (error != null) SetBottomRect(error.transform, new Vector2(0f, 100f), new Vector2(1000f, 30f));
+            InputField inputField = canvasGO.GetComponentInChildren<InputField>(true);
+            if (inputField != null)
+            {
+                SetBottomRect(inputField.transform, new Vector2(-80f, 50f), new Vector2(760f, 44f));
+                if (inputField.placeholder is Text placeholder) placeholder.text = "Cevabını buraya yaz...";
+            }
+            Button sendButton = canvasGO.GetComponentInChildren<Button>(true);
+            if (sendButton != null) SetBottomRect(sendButton.transform, new Vector2(390f, 50f), new Vector2(150f, 44f));
+
+            var encounter = guardGO.GetComponent<GuardEncounter>();
+            if (encounter == null) encounter = guardGO.AddComponent<GuardEncounter>();
+
+            var disable = new System.Collections.Generic.List<Behaviour>();
+            var movement = player.GetComponent<PlayerMovement>();
+            var combat = player.GetComponent<PlayerCombat>();
+            var cam = Object.FindFirstObjectByType<ThirdPersonCamera>(FindObjectsInactive.Include);
+            if (movement != null) disable.Add(movement);
+            if (combat != null) disable.Add(combat);
+            if (cam != null) disable.Add(cam);
+
+            var so = new SerializedObject(encounter);
+            so.FindProperty("dialogueController").objectReferenceValue = guardGO.GetComponent<NpcDialogueController>();
+            so.FindProperty("dialogueUI").objectReferenceValue = guardGO.GetComponent<DialogueUI>();
+            so.FindProperty("dialogueCanvas").objectReferenceValue = canvasGO;
+            so.FindProperty("playerInput").objectReferenceValue = canvasGO.GetComponentInChildren<InputField>(true);
+            so.FindProperty("player").objectReferenceValue = player.transform;
+            so.FindProperty("boss").objectReferenceValue = bossHealth != null ? bossHealth.gameObject : null;
+            so.FindProperty("talkDistance").floatValue = 10f;
+            SerializedProperty list = so.FindProperty("disableWhileTalking");
+            list.arraySize = disable.Count;
+            for (int i = 0; i < disable.Count; i++)
+            {
+                list.GetArrayElementAtIndex(i).objectReferenceValue = disable[i];
+            }
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene, ScenePath);
+
+            Debug.Log($"Muhafız hazinenin başına yerleştirildi ({target}). Boss: " +
+                      $"{(bossHealth != null ? bossHealth.name : "yok")}. Kilitlenen bileşenler: {disable.Count}. " +
+                      "Test için Ollama'nın çalıştığından emin ol (ollama serve / llama3.2:3b).");
+        }
+
+        private static T FindChildComponent<T>(GameObject parent, string childName) where T : Component
+        {
+            foreach (T component in parent.GetComponentsInChildren<T>(true))
+            {
+                if (component.gameObject.name == childName) return component;
+            }
+            return null;
+        }
+
+        private static void SetBottomRect(Transform target, Vector2 anchoredPos, Vector2 size)
+        {
+            var rect = (RectTransform)target;
+            rect.anchorMin = new Vector2(0.5f, 0f);
+            rect.anchorMax = new Vector2(0.5f, 0f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = anchoredPos;
+            rect.sizeDelta = size;
+        }
+
+        private static float VisibleHeight(Transform root)
+        {
+            bool found = false;
+            Bounds bounds = default;
+            foreach (Renderer r in root.GetComponentsInChildren<Renderer>())
+            {
+                if (!r.enabled) continue; // ör. oyuncunun gizli kapsül mesh'i
+                if (!found) { bounds = r.bounds; found = true; }
+                else bounds.Encapsulate(r.bounds);
+            }
+            return found ? bounds.size.y : 0f;
+        }
+
+        private static float GroundHeight(Vector3 point, GameObject ignore)
+        {
+            var hits = Physics.RaycastAll(point + Vector3.up * 50f, Vector3.down, 200f, ~0, QueryTriggerInteraction.Ignore);
+            float best = float.NegativeInfinity;
+            foreach (RaycastHit hit in hits)
+            {
+                if (hit.transform.IsChildOf(ignore.transform)) continue;
+                if (hit.point.y > best) best = hit.point.y;
+            }
+            return float.IsNegativeInfinity(best) ? point.y : best;
+        }
+
+        private static float GroundOffset(Vector3 pivot, GameObject owner)
+        {
+            float ground = GroundHeight(pivot, owner);
+            float offset = pivot.y - ground;
+            // Mantıksız bir sonuçta (zemin bulunamadı / çok yüksek) güvenli bir varsayılan kullan.
+            return offset >= 0f && offset < 3f ? offset : 0f;
         }
 
         private static NpcPersona GetOrCreateGuardPersona()
