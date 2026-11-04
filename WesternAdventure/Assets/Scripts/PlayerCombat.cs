@@ -7,8 +7,8 @@ public class PlayerCombat : MonoBehaviour
 {
     [SerializeField] private int punchDamage = 10;
     [SerializeField] private float punchRange = 2.2f;
-    [SerializeField] private float punchCooldown = 1.2f;
-    [SerializeField] private float hitDelay = 0.35f;
+    [SerializeField] private float punchCooldown = 0.7f;
+    [SerializeField] private float hitDelay = 0.2f;
 
     [Tooltip("Oyuncunun önündeki toplam vuruþ açýsý.")]
     [SerializeField] private float punchAngle = 120f;
@@ -48,7 +48,6 @@ public class PlayerCombat : MonoBehaviour
         isPunching = true;
         animator.SetTrigger("Attack");
 
-        // Yumruðun ileri uzandýðý ana yaklaþmak için bekle.
         yield return new WaitForSeconds(hitDelay);
 
         if (!playerHealth.IsDead)
@@ -56,7 +55,11 @@ public class PlayerCombat : MonoBehaviour
             HitClosestEnemy();
         }
 
-        float remainingTime = Mathf.Max(0f, punchCooldown - hitDelay);
+        float remainingTime = Mathf.Max(
+            0f,
+            punchCooldown - hitDelay
+        );
+
         yield return new WaitForSeconds(remainingTime);
 
         isPunching = false;
@@ -64,8 +67,10 @@ public class PlayerCombat : MonoBehaviour
 
     private void HitClosestEnemy()
     {
+        Vector3 origin = transform.position;
+
         Collider[] hits = Physics.OverlapSphere(
-            transform.position,
+            origin,
             punchRange,
             ~0,
             QueryTriggerInteraction.Ignore
@@ -80,14 +85,17 @@ public class PlayerCombat : MonoBehaviour
 
         foreach (Collider hit in hits)
         {
-            EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
+            // BossHealth de EnemyHealth'ten türediði için bulunur.
+            EnemyHealth enemy =
+                hit.GetComponentInParent<EnemyHealth>();
 
             if (enemy == null || enemy.IsDead)
             {
                 continue;
             }
 
-            Vector3 offset = enemy.transform.position - transform.position;
+            Vector3 targetPoint = hit.ClosestPoint(origin);
+            Vector3 offset = targetPoint - origin;
             float distance = offset.magnitude;
 
             if (distance > punchRange)
@@ -98,45 +106,25 @@ public class PlayerCombat : MonoBehaviour
             Vector3 flatDirection = offset;
             flatDirection.y = 0f;
 
-            // Oyuncunun arkasýndaki düþmanlara vurma.
+            // Collider'ýn içindeysek yönü merkezinden belirle.
+            if (flatDirection.sqrMagnitude < 0.001f)
+            {
+                flatDirection = hit.bounds.center - origin;
+                flatDirection.y = 0f;
+            }
+
             if (flatDirection.sqrMagnitude > 0.001f &&
-                Vector3.Dot(transform.forward, flatDirection.normalized)
-                    < minimumDot)
+                Vector3.Dot(
+                    transform.forward,
+                    flatDirection.normalized
+                ) < minimumDot)
             {
                 continue;
             }
 
-            // Duvar veya kaya arkasýndaki düþmana vurma.
-            if (distance > 0.001f)
+            if (IsBlocked(origin, targetPoint, enemy))
             {
-                RaycastHit[] blockers = Physics.RaycastAll(
-                    transform.position,
-                    offset.normalized,
-                    distance,
-                    ~0,
-                    QueryTriggerInteraction.Ignore
-                );
-
-                bool blocked = false;
-
-                foreach (RaycastHit blocker in blockers)
-                {
-                    Transform hitTransform = blocker.collider.transform;
-
-                    if (hitTransform.IsChildOf(transform) ||
-                        hitTransform.IsChildOf(enemy.transform))
-                    {
-                        continue;
-                    }
-
-                    blocked = true;
-                    break;
-                }
-
-                if (blocked)
-                {
-                    continue;
-                }
+                continue;
             }
 
             if (distance < closestDistance)
@@ -146,10 +134,49 @@ public class PlayerCombat : MonoBehaviour
             }
         }
 
+        // Bir yumruk, bir hedefe yalnýzca bir kez hasar verir.
         if (closestEnemy != null)
         {
             closestEnemy.TakeDamage(punchDamage);
         }
+    }
+
+    private bool IsBlocked(
+        Vector3 origin,
+        Vector3 targetPoint,
+        EnemyHealth enemy)
+    {
+        Vector3 offset = targetPoint - origin;
+        float distance = offset.magnitude;
+
+        if (distance < 0.001f)
+        {
+            return false;
+        }
+
+        RaycastHit[] blockers = Physics.RaycastAll(
+            origin,
+            offset.normalized,
+            distance,
+            ~0,
+            QueryTriggerInteraction.Ignore
+        );
+
+        foreach (RaycastHit blocker in blockers)
+        {
+            Transform hitTransform = blocker.collider.transform;
+
+            // Oyuncunun ve hedefin kendi collider'larýný engel sayma.
+            if (hitTransform.IsChildOf(transform) ||
+                hitTransform.IsChildOf(enemy.transform))
+            {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     private void OnDisable()
