@@ -3,18 +3,19 @@ using UnityEngine.AI;
 
 public class EnemyHealth : MonoBehaviour
 {
-    [SerializeField] private int maxHealth = 50;
+    [SerializeField] protected int maxHealth = 50;
     [SerializeField] private int currentHealth;
 
-    private Animator animator;
-    private NavMeshAgent agent;
+    protected Animator animator;
+    protected NavMeshAgent agent;
+
     private EnemyFollow enemyFollow;
 
     public int CurrentHealth => currentHealth;
     public int MaxHealth => maxHealth;
     public bool IsDead => currentHealth <= 0;
 
-    private void Awake()
+    protected virtual void Awake()
     {
         currentHealth = maxHealth;
 
@@ -38,24 +39,28 @@ public class EnemyHealth : MonoBehaviour
         {
             Die();
         }
-        else if (animator != null)
+        else
+        {
+            PlayHitReaction();
+        }
+    }
+
+    protected virtual void PlayHitReaction()
+    {
+        if (animator != null)
         {
             animator.SetTrigger("Hit");
         }
     }
 
-    private void Die()
+    protected virtual void Die()
     {
         if (enemyFollow != null)
         {
             enemyFollow.enabled = false;
         }
 
-        if (agent != null && agent.isActiveAndEnabled && agent.isOnNavMesh)
-        {
-            agent.isStopped = true;
-            agent.ResetPath();
-        }
+        StopAgent();
 
         if (animator != null)
         {
@@ -66,5 +71,16 @@ public class EnemyHealth : MonoBehaviour
         }
 
         Debug.Log($"{name} öldü.", this);
+    }
+
+    protected void StopAgent()
+    {
+        if (agent != null &&
+            agent.isActiveAndEnabled &&
+            agent.isOnNavMesh)
+        {
+            agent.isStopped = true;
+            agent.ResetPath();
+        }
     }
 }
