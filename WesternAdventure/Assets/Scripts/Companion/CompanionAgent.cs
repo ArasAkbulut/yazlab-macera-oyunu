@@ -99,6 +99,27 @@ namespace WesternAdventure.Companion
                 transform.rotation = Quaternion.LookRotation(moveInput);
             }
 
+            // Alanın kenarından düşerse (zeminin bittiği boşluğa yürürse): eğitimde bunu güçlü
+            // bir ceza ile hemen bitir (aksi halde episode max adıma kadar sürükleniyor ve
+            // model kenardan düşmeyi "keşfedip" pekiştirebiliyor); gerçek oyunda ise sadece
+            // başlangıç noktasına güvenli şekilde geri al.
+            if (transform.position.y < _startPosition.y - 10f)
+            {
+                if (returnToStartOnEpisodeBegin)
+                {
+                    AddReward(-1f);
+                    EndEpisode();
+                }
+                else
+                {
+                    _controller.enabled = false;
+                    transform.position = _startPosition;
+                    _controller.enabled = true;
+                    _verticalSpeed = 0f;
+                }
+                return;
+            }
+
             AddReward(-0.001f);
 
             if (obstacleTarget != null)
