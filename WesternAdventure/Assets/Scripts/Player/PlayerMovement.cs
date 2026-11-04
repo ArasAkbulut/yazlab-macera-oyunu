@@ -201,6 +201,14 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    private void OnDisable()
+    {
+        // Dialogue and pause disable movement; also clear the last running pose.
+        if (animator != null) animator.SetBool(IsRunning, false);
+        verticalSpeed = 0f;
+        hasSteepContact = false;
+    }
+
     private bool FindGround(out RaycastHit closestHit)
     {
         Bounds bounds = controller.bounds;

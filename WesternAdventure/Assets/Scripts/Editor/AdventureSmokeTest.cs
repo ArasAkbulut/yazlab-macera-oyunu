@@ -63,7 +63,10 @@ namespace WesternAdventure.EditorTools
                     for(int i=0;i<5;i++) Invoke(flow,"NextIntro");
                     Check(Time.timeScale == 1 && flow.player.GetComponent<PlayerCombat>().enabled, "Intro finishes into gameplay");
                     Invoke(flow, "Pause"); Check(Time.timeScale == 0, "Pause stops world"); Invoke(flow, "Resume");
+                    var playerAnimator=flow.player.GetComponentInChildren<Animator>();
+                    playerAnimator.SetBool("IsRunning",true);
                     flow.player.GetComponent<PlayerMovement>().enabled=false;
+                    Check(!playerAnimator.GetBool("IsRunning"), "Disabling movement clears running animation");
                     var pc=flow.player.GetComponent<CharacterController>();
                     Teleport(pc,flow.companion.entrance.position + Vector3.up * 1.02f);
                     for(int i=0;i<100;i++) pc.Move(new Vector3(0,-.02f,.04f));
@@ -108,6 +111,7 @@ namespace WesternAdventure.EditorTools
                 {
                     Check(flow.ReturnedThroughGate,"Guard conversation starts after return");
                     Check(!flow.player.GetComponent<PlayerCombat>().enabled, "Guard conversation disables punches");
+                    Check(!flow.player.GetComponentInChildren<Animator>().GetBool("IsRunning"), "Player is not running during guard dialogue");
                     // Exercise the actual encounter's success event, independently of nondeterministic LLM text.
                     if (SessionState.GetBool("InspectGuard",false))
                     { SessionState.SetBool("InspectGuard",false); EditorApplication.isPaused=true; stage=6; }
