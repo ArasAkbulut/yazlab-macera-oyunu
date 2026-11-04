@@ -34,6 +34,11 @@ namespace WesternAdventure.Companion
         private float _verticalSpeed;
         private float _previousDistance;
 
+        private float _stuckCheckTimer;
+        private Vector3 _stuckCheckPosition;
+        private float _unstuckTimer;
+        private Vector3 _unstuckDirection;
+
         public bool IsBusy { get; private set; }
 
         private void Awake()
@@ -56,6 +61,10 @@ namespace WesternAdventure.Companion
             _previousDistance = obstacleTarget != null
                 ? Vector3.Distance(transform.position, obstacleTarget.position)
                 : 0f;
+
+            _stuckCheckTimer = 0f;
+            _stuckCheckPosition = transform.position;
+            _unstuckTimer = 0f;
         }
 
         public override void CollectObservations(VectorSensor sensor)
@@ -106,6 +115,11 @@ namespace WesternAdventure.Companion
             {
                 moveInput = AvoidObstacles(moveInput);
             }
+
+            // Köşeye/engele saplanıp dönerek yerinde sayma durumu: 45°/90° kaçınma bile
+            // yetmiyorsa (ör. içbükey köşe), bir süre hiç ilerleme olmadığını tespit edip
+            // geriye + yana doğru zorlayıcı bir kaçış manevrası uygula.
+            moveInput = ApplyStuckRecovery(moveInput);
 
             if (_controller.isGrounded && _verticalSpeed < 0f)
             {
@@ -196,6 +210,44 @@ namespace WesternAdventure.Companion
             }
 
             return Vector3.zero;
+        }
+
+        /// <summary>
+        /// Bir süre neredeyse hiç yer değiştirmeden (saplanmış) kalınırsa, istenen yönü bir
+        /// süreliğine geriye + yana doğru zorlayıcı bir kaçış vektörüyle değiştirir.
+        /// </summary>
+        private Vector3 ApplyStuckRecovery(Vector3 desiredDirection)
+        {
+            const float checkInterval = 1f;
+            const float stuckDistance = 0.4f;
+            const float recoveryDuration = 1f;
+
+            if (_unstuckTimer > 0f)
+            {
+                _unstuckTimer -= Time.deltaTime;
+                return _unstuckDirection;
+            }
+
+            _stuckCheckTimer += Time.deltaTime;
+            if (_stuckCheckTimer < checkInterval)
+            {
+                return desiredDirection;
+            }
+
+            float moved = Vector3.Distance(transform.position, _stuckCheckPosition);
+            _stuckCheckTimer = 0f;
+            _stuckCheckPosition = transform.position;
+
+            if (moved >= stuckDistance || desiredDirection.sqrMagnitude < 0.01f)
+            {
+                return desiredDirection;
+            }
+
+            Vector3 away = -desiredDirection.normalized;
+            Vector3 sideways = Quaternion.Euler(0f, Random.value > 0.5f ? 90f : -90f, 0f) * desiredDirection.normalized;
+            _unstuckDirection = (away + sideways).normalized;
+            _unstuckTimer = recoveryDuration;
+            return _unstuckDirection;
         }
 
         public override void Heuristic(in ActionBuffers actionsOut)
