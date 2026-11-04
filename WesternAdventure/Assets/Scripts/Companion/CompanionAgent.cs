@@ -79,6 +79,29 @@ namespace WesternAdventure.Companion
             var moveInput = new Vector3(moveX, 0f, moveZ);
             if (moveInput.sqrMagnitude > 1f) moveInput.Normalize();
 
+            // Model, eğitim alanındaki mesafe aralığının (~17 birim) dışında güvenilir değil —
+            // gerçek haritada hedef çok daha uzakta olabiliyor ve model tamamen yanlış yöne
+            // sürüklenebiliyor. Mesafe eğitim aralığını aştıkça, modelin kararına hedefe-doğru
+            // bir çekim karıştırılıyor; yakınken (eğitildiği aralıkta) modele tam güveniliyor.
+            const float trainedRange = 18f;
+            const float blendRange = 20f;
+            if (obstacleTarget != null)
+            {
+                float distance = Vector3.Distance(transform.position, obstacleTarget.position);
+                if (distance > trainedRange)
+                {
+                    Vector3 toTarget = obstacleTarget.position - transform.position;
+                    toTarget.y = 0f;
+                    if (toTarget.sqrMagnitude > 0.0001f)
+                    {
+                        Vector3 seekDirection = toTarget.normalized;
+                        float blend = Mathf.Clamp01((distance - trainedRange) / blendRange);
+                        moveInput = Vector3.Lerp(moveInput, seekDirection, blend);
+                        if (moveInput.sqrMagnitude > 1f) moveInput.Normalize();
+                    }
+                }
+            }
+
             if (moveInput.sqrMagnitude > 0.01f)
             {
                 moveInput = AvoidObstacles(moveInput);
