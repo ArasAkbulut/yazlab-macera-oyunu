@@ -11,13 +11,16 @@ bu paketlerin kendi lisansları geçerliliğini korur. UI fontu Unity'nin yerle�
 - `IronboundMineGate`: mevcut TunnelGate collider'ı ve açılma olayına bağlı demir kuşaklı ahşap kapı.
 - `ProspectorsTreasureChest`: kapak menteşesi, metal kuşaklar, kilit ve altın külçeleri.
 - `WesternCraft Set / AdventureFlow`: Türkçe başlangıç, dört adımlı konuşma, duraklatma,
-  hedef metni, yenilgi ve sandık açıldıktan sonra zafer ekranı.
+  hedef metni, yenilgi ve dönüşte muhafız ikna edildikten sonra zafer ekranı.
 
 ## Oynanış
 
 WASD hareket, Shift koşu, Space zıplama, sol tık yumruk, E etkileşim, Esc duraklatma.
 Maden vincinin alçak girişinin yakınına gel, köpek yanına ulaşınca E'ye bas.
 Köpek kola gidip kapıyı açar ve geri döner. Golem yenildikten sonra sandığın yanında E'ye bas.
+Hazine alınınca oyun devam eder: açılan tünelden geri geç, muhafıza yaklaş ve konuş.
+Muhafız yerel Ollama (llama3.2:3b) ile cevap verir. Bağlantı yoksa hata gösterilir; otomatik zafer verilmez.
+Köpek 1.2 m, alçak giriş 1.5 m yüksekliğindedir.
 Başlangıç konuşması atlanabilir; yeniden oyna sahneyi sıfırlar.
 
 ## Companion entegrasyonu
@@ -34,4 +37,6 @@ Prefablar ve sahne normal Unity araçlarıyla düzenlenebilir.
 `WesternAdventure > Polish > Build Adventure` kurulum aracıdır; yeniden çalıştırmak
 üretilen seti ve konumlarını yeniden oluşturur. Elle düzenledikten sonra gereksiz yere çalıştırma.
 `Run Gameplay Checks` Play Mode'da başlangıç/konuşma, rota, geçit, kol, kapı ve sandığı sınar.
+Kontrol ayrıca dönüşte kapıdan fiziksel geçişi, muhafızın konuşma kilidini ve sonucun beklenmesini sınar.
+Otomatik kontrol muhafızın başarı olayını tetikler; gerçek LLM yanıt kalitesini sınamaz.
 Testler sahneyi Play Mode dışında değiştirmez.

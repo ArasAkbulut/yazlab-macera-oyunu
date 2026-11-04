@@ -123,3 +123,8 @@ __pycache__/
 /WesternAdventure/[Oo]bj/
 /WesternAdventure/[Ll]ogs/
 /WesternAdventure/[Uu]ser[Ss]ettings/
+
+# Local adventure editor check reports
+/WesternAdventure/AdventurePolishReport.txt
+/WesternAdventure/AdventureRoutes.txt
+/WesternAdventure/AdventureSmokeReport.txt

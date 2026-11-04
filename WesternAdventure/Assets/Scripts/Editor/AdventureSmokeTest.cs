@@ -32,6 +32,8 @@ namespace WesternAdventure.EditorTools
             SessionState.SetBool("AdventureSmoke", true);
             EditorApplication.isPlaying = true;
         }
+        [MenuItem("WesternAdventure/Polish/Inspect Guard Check %&g")]
+        public static void InspectGuard() { SessionState.SetBool("InspectGuard",true); Run(); }
         private static void Check(bool condition, string message)
         {
             if (!condition) throw new Exception(message);
@@ -44,6 +46,7 @@ namespace WesternAdventure.EditorTools
         {
             try
             {
+                if (EditorApplication.isPaused) return;
                 if (EditorApplication.timeSinceStartup > deadline) throw new Exception("Timed out at stage " + stage + "; dog=" + flow.companion.transform.position);
                 if (stage == 0)
                 {
@@ -75,11 +78,36 @@ namespace WesternAdventure.EditorTools
                 {
                     Check(GameObject.Find("TunnelGate").transform.position.y > originalGateY,"Lever raised gate");
                     Check(flow.companion.transform.position.z < flow.companion.entrance.position.z + .4f,"Dog returned through passage");
+                    Teleport(flow.player.GetComponent<CharacterController>(),flow.chest.position + new Vector3(0,1.1f,-2));
                     flow.boss.TakeDamage(10000); Check(flow.boss.IsDead,"Boss defeat remains functional");
                     flow.StartCoroutine((System.Collections.IEnumerator)flow.GetType().GetMethod("OpenTreasure",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(flow,null)); stage=3;
                 }
-                else if(stage==3 && Time.timeScale==0)
-                { Check(Quaternion.Angle(flow.chestLid.localRotation,Quaternion.identity)>90,"Chest lid opens before victory"); Finish(); }
+                else if(stage==3 && flow.TreasureCollected)
+                {
+                    Check(Time.timeScale==1, "Boss and chest do not end the game");
+                    Check(!flow.returnGuard.IsConversationOpen && !flow.CanMeetGuard, "Guard waits for return through gate");
+                    Check(Quaternion.Angle(flow.chestLid.localRotation,Quaternion.identity)>90, "Treasure lid opens");
+                    var pc=flow.player.GetComponent<CharacterController>();
+                    Teleport(pc,new Vector3(flow.returnGate.position.x+4,1.1f,flow.returnGate.position.z));
+                    for(int i=0;i<200;i++) pc.Move(new Vector3(-.05f,-.02f,0));
+                    Check(pc.transform.position.x < flow.returnGate.position.x-3, "Player physically crosses opened gate on return");
+                    stage=4;
+                }
+                else if(stage==4 && flow.returnGuard.IsConversationOpen)
+                {
+                    Check(flow.ReturnedThroughGate,"Guard conversation starts after return");
+                    Check(!flow.player.GetComponent<PlayerCombat>().enabled, "Guard conversation disables punches");
+                    // Exercise the actual encounter's success event, independently of nondeterministic LLM text.
+                    if (SessionState.GetBool("InspectGuard",false))
+                    { SessionState.SetBool("InspectGuard",false); EditorApplication.isPaused=true; stage=6; }
+                    else { GameEvents.RaiseNpcUnlockedDoor(); stage=5; }
+                }
+                else if(stage==6) { GameEvents.RaiseNpcUnlockedDoor(); stage=5; deadline=EditorApplication.timeSinceStartup+30; }
+                else if(stage==5 && Time.timeScale==0)
+                {
+                    Check(flow.returnGuard.Passed && !flow.returnGuard.IsConversationOpen, "Victory waits for guard resolution and final line");
+                    Finish();
+                }
             }
             catch(Exception e) { results += "FAIL: " + e + "\n"; Finish(); }
         }

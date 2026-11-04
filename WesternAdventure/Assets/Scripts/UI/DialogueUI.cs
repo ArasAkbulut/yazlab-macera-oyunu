@@ -55,7 +55,7 @@ namespace WesternAdventure.UI
             int remaining = dialogueController.MaxTurns - dialogueController.CurrentTurn;
             if (action.GetActionType() == NpcActionType.None && remaining > 0)
             {
-                line += $"\n<size=16>(Kalan cevap hakkın: {remaining})</size>";
+                line += $"\n<size=24>(Kalan cevap hakkın: {remaining})</size>";
             }
             replyText.text = line;
         }

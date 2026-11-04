@@ -5,6 +5,8 @@ using Unity.AI.Navigation;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.UI;
+using WesternAdventure.NPC;
 using WesternAdventure.Companion;
 using WesternAdventure.Core;
 
@@ -64,14 +66,14 @@ namespace WesternAdventure.EditorTools
                 var ml = dog.GetComponent<CompanionAgent>(); if (ml != null) ml.enabled = false;
                 foreach (var component in dog.GetComponents<MonoBehaviour>())
                     if (component.GetType().Name == "DecisionRequester") component.enabled = false;
-                var cc = dog.GetComponent<CharacterController>(); cc.height = .85f; cc.radius = .25f;
-                cc.center = new Vector3(0, .44f, 0); cc.stepOffset = .3f; cc.skinWidth = .025f;
+                var cc = dog.GetComponent<CharacterController>(); cc.height = 1.2f; cc.radius = .32f;
+                cc.center = new Vector3(0, .62f, 0); cc.stepOffset = .3f; cc.skinWidth = .025f;
                 var visual = dog.transform.Find("CompanionDogModel");
                 if (visual != null)
                 {
                     var renderers = visual.GetComponentsInChildren<Renderer>();
                     Bounds bounds = renderers[0].bounds; foreach (var r in renderers) bounds.Encapsulate(r.bounds);
-                    visual.localScale *= .82f / bounds.size.y;
+                    visual.localScale *= 1.2f / bounds.size.y;
                     Physics.SyncTransforms(); bounds = renderers[0].bounds; foreach (var r in renderers) bounds.Encapsulate(r.bounds);
                     visual.position += Vector3.up * (dog.transform.position.y - bounds.min.y);
                 }
@@ -106,6 +108,19 @@ namespace WesternAdventure.EditorTools
                 flow.player = player.transform; flow.companion = guide; flow.chest = chestInstance.transform;
                 flow.chestLid = chestInstance.transform.Find("LidPivot"); flow.boss = UnityEngine.Object.FindFirstObjectByType<BossHealth>();
                 flow.viewCamera = Camera.main;
+                var guard = Need("TunnelGuard").GetComponent<GuardEncounter>();
+                flow.returnGuard = guard; flow.returnGate = gate.transform; guard.adventure = flow;
+                var guardPosition = new Vector3(-242, 0, 73);
+                if (UnityEngine.AI.NavMesh.SamplePosition(guardPosition, out var ground, 5, UnityEngine.AI.NavMesh.AllAreas))
+                    guardPosition = ground.position;
+                guard.transform.position = guardPosition;
+                guard.transform.rotation = Quaternion.Euler(0, 90, 0);
+                var guardSettings = new SerializedObject(guard);
+                guardSettings.FindProperty("talkDistance").floatValue = 4f;
+                guardSettings.FindProperty("openingQuestion").stringValue = "Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.";
+                var dialogueCanvas = (GameObject)guardSettings.FindProperty("dialogueCanvas").objectReferenceValue;
+                guardSettings.ApplyModifiedPropertiesWithoutUndo();
+                StyleGuardDialogue(dialogueCanvas);
                 var menuView = new GameObject("MenuView").transform; menuView.SetParent(root.transform);
                 menuView.position = player.transform.position + new Vector3(-7, 5, -8);
                 menuView.LookAt(player.transform.position + new Vector3(8, 1, 4)); flow.menuView = menuView;
@@ -144,6 +159,39 @@ namespace WesternAdventure.EditorTools
             catch(Exception e) { File.WriteAllText("AdventurePolishReport.txt", e.ToString()); Debug.LogException(e); }
         }
 
+        private static void StyleGuardDialogue(GameObject canvasObject)
+        {
+            if (canvasObject == null) throw new Exception("Guard dialogue canvas missing");
+            var canvas = canvasObject.GetComponent<Canvas>(); canvas.sortingOrder = 150;
+            var scaler = canvasObject.GetComponent<CanvasScaler>();
+            scaler.referenceResolution = new Vector2(1280, 720); scaler.matchWidthOrHeight = .5f;
+            foreach (var text in canvasObject.GetComponentsInChildren<Text>(true))
+            {
+                text.fontSize = 28; text.resizeTextForBestFit = false;
+                text.fontStyle = FontStyle.Bold;
+                if (text.name == "ReplyText") { text.fontSize = 30; text.color = Color.white; Place(text.rectTransform, 0, 245, 1060, 200); }
+                else if (text.name == "ThinkingIndicator" || text.name == "ErrorText") Place(text.rectTransform, 0, 115, 1060, 50);
+                EditorUtility.SetDirty(text);
+            }
+            foreach (var image in canvasObject.GetComponentsInChildren<Image>(true))
+                if (image.name.Contains("Background"))
+                { image.color = new Color(.025f,.03f,.035f,.97f); Place(image.rectTransform,0,190,1200,370); }
+            var input = canvasObject.GetComponentInChildren<InputField>(true);
+            if (input != null)
+            {
+                Place((RectTransform)input.transform,-90,60,860,64);
+                input.textComponent.fontSize = 28; input.textComponent.color = new Color(.08f,.08f,.08f);
+                if (input.placeholder is Text placeholder) { placeholder.fontSize = 28; placeholder.color = new Color(.3f,.3f,.3f); }
+            }
+            var button = canvasObject.GetComponentInChildren<Button>(true);
+            if (button != null) Place((RectTransform)button.transform,455,60,180,64);
+        }
+        private static void Place(RectTransform rect,float x,float y,float w,float h)
+        {
+            rect.anchorMin = rect.anchorMax = new Vector2(.5f,0);
+            rect.pivot = new Vector2(.5f,.5f); rect.anchoredPosition = new Vector2(x,y); rect.sizeDelta = new Vector2(w,h);
+        }
+
         private static GameObject Need(string name) => GameObject.Find(name) ?? throw new InvalidOperationException("Missing scene object: " + name);
         private static Material Mat(string name, Color color, float metallic = 0)
         {
@@ -175,20 +223,20 @@ namespace WesternAdventure.EditorTools
             Box(t,"Right wall",new Vector3(3.1f,1.9f,0),new Vector3(.4f,3.8f,7),wood,true);
             Box(t,"Back wall",new Vector3(0,1.9f,3.3f),new Vector3(6.2f,3.8f,.4f),wood,true);
             Box(t,"Roof",new Vector3(0,3.85f,0),new Vector3(6.8f,.3f,7.6f),woodLight,true);
-            // A 1.1m wide, 1.1m high opening: dog 0.85m, player 2m.
-            Box(t,"Front left",new Vector3(-1.85f,1.9f,-3.3f),new Vector3(2.6f,3.8f,.4f),wood,true);
-            Box(t,"Front right",new Vector3(1.85f,1.9f,-3.3f),new Vector3(2.6f,3.8f,.4f),wood,true);
-            Box(t,"Low passage lintel",new Vector3(0,2.45f,-3.3f),new Vector3(1.1f,2.7f,.6f),wood,true);
+            // A 1.4m wide, 1.5m high opening: dog 1.2m, player 2m.
+            Box(t,"Front left",new Vector3(-1.95f,1.9f,-3.3f),new Vector3(2.5f,3.8f,.4f),wood,true);
+            Box(t,"Front right",new Vector3(1.95f,1.9f,-3.3f),new Vector3(2.5f,3.8f,.4f),wood,true);
+            Box(t,"Low passage lintel",new Vector3(0,2.65f,-3.3f),new Vector3(1.4f,2.3f,.6f),wood,true);
             for(int side=-1; side<=1; side+=2)
             {
-                Box(t,"Entrance trim",new Vector3(side*.65f,.55f,-3.65f),new Vector3(.16f,1.1f,.18f),iron);
+                Box(t,"Entrance trim",new Vector3(side*.8f,.75f,-3.65f),new Vector3(.16f,1.5f,.18f),iron);
                 for(int i=0;i<7;i++) Box(t,"Wall rib",new Vector3(side*3.32f,1.9f,-3+i),new Vector3(.12f,3.8f,.13f),woodLight);
             }
-            Box(t,"Entry header",new Vector3(0,1.18f,-3.65f),new Vector3(1.45f,.16f,.18f),iron);
+            Box(t,"Entry header",new Vector3(0,1.58f,-3.65f),new Vector3(1.75f,.16f,.18f),iron);
             for(int i=0;i<13;i++) Box(t,"Front plank",new Vector3(-3+i*.5f,2.5f,-3.53f),new Vector3(.035f,2.4f,.025f),iron);
             Box(t,"Sign board",new Vector3(0,2.55f,-3.62f),new Vector3(3.6f,.8f,.15f),iron);
-            Sign(t,"MADEN VİNCİ",new Vector3(0,2.58f,-3.72f),.07f);
-            Sign(t,"YALNIZCA KÜÇÜK DOSTLAR",new Vector3(0,1.65f,-3.7f),.035f);
+            Sign(t,"MADEN VİNCİ",new Vector3(0,2.58f,-3.72f),.12f);
+            Sign(t,"DOSTUNUN GEÇİDİ",new Vector3(0,1.95f,-3.7f),.085f);
             var point = new GameObject("CommandPoint").transform; point.SetParent(t,false); point.localPosition = new Vector3(0,.05f,-4.4f);
             point = new GameObject("LeverPoint").transform; point.SetParent(t,false); point.localPosition = new Vector3(0,.05f,1);
             return obj;
@@ -246,7 +294,7 @@ namespace WesternAdventure.EditorTools
             var flow=UnityEngine.Object.FindFirstObjectByType<AdventureFlow>();
             if(flow==null || flow.companion==null || flow.chestLid==null || flow.boss==null) throw new Exception("Gameplay references missing");
             var dog=flow.companion.GetComponent<CharacterController>(); var player=flow.player.GetComponent<CharacterController>();
-            if(dog.height>=1.1f || player.height<=1.1f) throw new Exception("Passage dimensions invalid");
+            if(dog.height>=1.5f || player.height<=1.5f) throw new Exception("Passage dimensions invalid");
             if(flow.companion.GetComponent<CompanionAgent>().enabled) throw new Exception("Two dog movement drivers enabled");
             if(Need("LeverTriggerZone").GetComponent<SphereCollider>().radius>.5f) throw new Exception("Lever trigger too large");
             if(!UnityEngine.AI.NavMesh.SamplePosition(flow.player.position,out _,3,UnityEngine.AI.NavMesh.AllAreas)) throw new Exception("Player not near NavMesh");
