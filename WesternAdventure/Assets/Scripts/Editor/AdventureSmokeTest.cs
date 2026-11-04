@@ -20,6 +20,7 @@ namespace WesternAdventure.EditorTools
         static AdventureSmokeTest()
         {
             EditorApplication.playModeStateChanged += state => {
+                if (state == PlayModeStateChange.ExitingPlayMode) { EditorApplication.update -= Tick; SessionState.SetBool("AdventureSmoke", false); }
                 if (state == PlayModeStateChange.EnteredPlayMode && SessionState.GetBool("AdventureSmoke", false))
                 { stage = 0; results = ""; deadline = EditorApplication.timeSinceStartup + 90; EditorApplication.update += Tick; }
             };
@@ -59,7 +60,7 @@ namespace WesternAdventure.EditorTools
                     NavMesh.SamplePosition(flow.companion.entrance.position, out var to, 3, NavMesh.AllAreas);
                     Check(NavMesh.CalculatePath(from.position, to.position, NavMesh.AllAreas, path) && path.status == NavMeshPathStatus.PathComplete, "Dog spawn has complete path to entrance");
                     Invoke(flow, "ShowIntro");
-                    for(int i=0;i<4;i++) Invoke(flow,"NextIntro");
+                    for(int i=0;i<5;i++) Invoke(flow,"NextIntro");
                     Check(Time.timeScale == 1 && flow.player.GetComponent<PlayerCombat>().enabled, "Intro finishes into gameplay");
                     Invoke(flow, "Pause"); Check(Time.timeScale == 0, "Pause stops world"); Invoke(flow, "Resume");
                     flow.player.GetComponent<PlayerMovement>().enabled=false;
@@ -68,6 +69,14 @@ namespace WesternAdventure.EditorTools
                     for(int i=0;i<100;i++) pc.Move(new Vector3(0,-.02f,.04f));
                     Check(pc.transform.position.z < flow.companion.entrance.position.z + 1.1f, "Player cannot pass beneath lintel");
                     Teleport(pc,flow.companion.entrance.position + new Vector3(2,1.02f,-1));
+                    Check(!flow.returnGuard.gameObject.activeInHierarchy, "Guard hidden before boss defeat");
+                    flow.companion.CommandClearObstacle(flow.companion.leverTarget);
+                    Check(!flow.companion.IsBusy, "Lever command blocked while four rivals live");
+                    for(int i=0;i<3;i++) flow.approachEnemies[i].TakeDamage(10000);
+                    flow.companion.CommandClearObstacle(flow.companion.leverTarget);
+                    Check(!flow.companion.IsBusy && !flow.CanSendCompanion, "Three defeated rivals do not unlock lever");
+                    flow.approachEnemies[3].TakeDamage(10000);
+                    Check(flow.CanSendCompanion, "Fourth defeated rival unlocks lever");
                     originalGateY=GameObject.Find("TunnelGate").transform.position.y;
                     flow.companion.CommandClearObstacle(flow.companion.leverTarget);
                     stage=1;
@@ -85,6 +94,8 @@ namespace WesternAdventure.EditorTools
                 else if(stage==3 && flow.TreasureCollected)
                 {
                     Check(Time.timeScale==1, "Boss and chest do not end the game");
+                    Check(flow.returnGuard.gameObject.activeInHierarchy, "Guard appears after boss defeat");
+                    Check(Mathf.Abs(flow.returnGuard.transform.position.x-flow.returnGate.position.x)<3 && Mathf.Abs(flow.returnGuard.transform.position.z-flow.returnGate.position.z)<1, "Guard positioned inside tunnel");
                     Check(!flow.returnGuard.IsConversationOpen && !flow.CanMeetGuard, "Guard waits for return through gate");
                     Check(Quaternion.Angle(flow.chestLid.localRotation,Quaternion.identity)>90, "Treasure lid opens");
                     var pc=flow.player.GetComponent<CharacterController>();

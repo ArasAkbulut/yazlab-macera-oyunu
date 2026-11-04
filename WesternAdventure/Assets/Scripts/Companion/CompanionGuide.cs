@@ -9,6 +9,7 @@ namespace WesternAdventure.Companion
     public class CompanionGuide : MonoBehaviour, ICompanionAgent
     {
         public Transform player;
+        public AdventureFlow adventure;
         public Transform entrance;
         public Transform leverTarget;
         public Transform leverHandle;
@@ -47,6 +48,7 @@ namespace WesternAdventure.Companion
         public void CommandClearObstacle(Transform target)
         {
             if (IsBusy || LeverOpened || target == null || entrance == null) return;
+            if (adventure != null && !adventure.CanSendCompanion) return;
             leverTarget = target;
             phase = 1;
             repathAt = 0;

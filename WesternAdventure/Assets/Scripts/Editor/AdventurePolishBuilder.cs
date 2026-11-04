@@ -105,18 +105,20 @@ namespace WesternAdventure.EditorTools
                 var chestObject = Chest(); var chestInstance = SavePrefab(chestObject, "ProspectorsTreasureChest", root.transform);
                 chestInstance.transform.position = new Vector3(chestAnchor.transform.position.x, .04f, chestAnchor.transform.position.z);
                 var flow = root.AddComponent<AdventureFlow>();
+                guide.adventure = flow;
+                flow.approachEnemies = Enumerable.Range(1,4).Select(i => Need("Enemy_0" + i).GetComponent<EnemyHealth>()).ToArray();
                 flow.player = player.transform; flow.companion = guide; flow.chest = chestInstance.transform;
                 flow.chestLid = chestInstance.transform.Find("LidPivot"); flow.boss = UnityEngine.Object.FindFirstObjectByType<BossHealth>();
                 flow.viewCamera = Camera.main;
                 var guard = Need("TunnelGuard").GetComponent<GuardEncounter>();
                 flow.returnGuard = guard; flow.returnGate = gate.transform; guard.adventure = flow;
-                var guardPosition = new Vector3(-242, 0, 73);
+                var guardPosition = new Vector3(-236, 0, 73);
                 if (UnityEngine.AI.NavMesh.SamplePosition(guardPosition, out var ground, 5, UnityEngine.AI.NavMesh.AllAreas))
                     guardPosition = ground.position;
                 guard.transform.position = guardPosition;
                 guard.transform.rotation = Quaternion.Euler(0, 90, 0);
                 var guardSettings = new SerializedObject(guard);
-                guardSettings.FindProperty("talkDistance").floatValue = 4f;
+                guardSettings.FindProperty("talkDistance").floatValue = 5f;
                 guardSettings.FindProperty("openingQuestion").stringValue = "Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.";
                 var dialogueCanvas = (GameObject)guardSettings.FindProperty("dialogueCanvas").objectReferenceValue;
                 guardSettings.ApplyModifiedPropertiesWithoutUndo();
@@ -236,7 +238,6 @@ namespace WesternAdventure.EditorTools
             for(int i=0;i<13;i++) Box(t,"Front plank",new Vector3(-3+i*.5f,2.5f,-3.53f),new Vector3(.035f,2.4f,.025f),iron);
             Box(t,"Sign board",new Vector3(0,2.55f,-3.62f),new Vector3(3.6f,.8f,.15f),iron);
             Sign(t,"MADEN VİNCİ",new Vector3(0,2.58f,-3.72f),.12f);
-            Sign(t,"DOSTUNUN GEÇİDİ",new Vector3(0,1.95f,-3.7f),.085f);
             var point = new GameObject("CommandPoint").transform; point.SetParent(t,false); point.localPosition = new Vector3(0,.05f,-4.4f);
             point = new GameObject("LeverPoint").transform; point.SetParent(t,false); point.localPosition = new Vector3(0,.05f,1);
             return obj;

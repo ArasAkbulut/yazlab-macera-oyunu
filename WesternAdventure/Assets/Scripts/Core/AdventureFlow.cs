@@ -21,6 +21,18 @@ namespace WesternAdventure.Core
         public Transform menuView;
         public GuardEncounter returnGuard;
         public Transform returnGate;
+        public EnemyHealth[] approachEnemies;
+        public int DefeatedApproachEnemies
+        {
+            get
+            {
+                int count = 0;
+                if (approachEnemies != null)
+                    foreach (var enemy in approachEnemies) if (enemy != null && enemy.IsDead) count++;
+                return count;
+            }
+        }
+        public bool CanSendCompanion => approachEnemies != null && approachEnemies.Length == 4 && DefeatedApproachEnemies == 4;
         public bool TreasureCollected { get; private set; }
         public bool ReturnedThroughGate { get; private set; }
         public bool CanMeetGuard => TreasureCollected && ReturnedThroughGate && screen == Screen.Playing;
@@ -37,9 +49,10 @@ namespace WesternAdventure.Core
         private PlayerCombat combat;
         private ThirdPersonCamera cameraController;
         private PlayerHealth health;
-        private readonly string[] speakers = { "KOVBOY", "DOSTUM", "KOVBOY", "KOVBOY" };
+        private readonly string[] speakers = { "KOVBOY", "KOVBOY", "DOSTUM", "KOVBOY", "KOVBOY" };
         private readonly string[] lines = {
             "Harita bizi bu kanyona getirdi. Hazineye giden yolu birlikte bulacağız.",
+            "Sanırım hazineyi bizden önce almaya gelenler olmuş. Önce şu dört kişiyi yenmemiz gerekecek. Ortalık güvenli olmadan seni kola gönderemem, dostum.",
             "Hav! Hav!\n(Köpek eski madenin girişine doğru bakar.)",
             "Şu alçak geçitten yalnızca sen sığarsın. Yanına geldiğimizde E ile sana işaret edeceğim. İçerideki kolu indir; ben dışarıda beklerim.",
             "Kapının ardında tehlike var. Golem yorulduğunda yaklaşır, yumruk atarım. Hazırsan yola çıkalım, dostum." };
@@ -53,10 +66,16 @@ namespace WesternAdventure.Core
             cameraController = viewCamera.GetComponent<ThirdPersonCamera>();
             if (cameraController != null) cameraController.externalCursorControl = true;
             font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            if (returnGuard != null) returnGuard.gameObject.SetActive(false);
             BuildCanvas();
             ShowTitle();
         }
         private void Start() { ApplyState(); }
+        private void LateUpdate()
+        {
+            if (boss != null && boss.IsDead && returnGuard != null && !returnGuard.gameObject.activeSelf)
+                returnGuard.gameObject.SetActive(true);
+        }
         private void OnDestroy() { Time.timeScale = 1; }
 
         private void BuildCanvas()
@@ -166,10 +185,15 @@ namespace WesternAdventure.Core
             previousPlayerX = player.position.x;
             if (keys != null && keys.escapeKey.wasPressedThisFrame) { Pause(); return; }
             bool bossDefeated = boss != null && boss.IsDead;
-            objective.text = TreasureCollected ? "04  /  Geçitten geri dön • Muhafızla konuş" : !companion.LeverOpened ? "01  /  Dostunla eski maden koluna ulaş" : !bossDefeated ? "02  /  Golemi yen • Dinlenirken saldır" : "03  /  Hazine sandığını aç";
+            objective.text = !CanSendCompanion ? $"01  /  Rakipleri yen • {DefeatedApproachEnemies}/4" : TreasureCollected ? "04  /  Geçitten geri dön • Muhafızla konuş" : !companion.LeverOpened ? "01  /  Dostunla eski maden koluna ulaş" : !bossDefeated ? "02  /  Golemi yen • Dinlenirken saldır" : "03  /  Hazine sandığını aç";
             hint.text = "";
             if (!companion.LeverOpened && Vector3.Distance(player.position, companion.entrance.position) < 4)
             {
+                if (!CanSendCompanion)
+                {
+                    hint.text = $"Önce dört düşmanı yenmelisin. Kalan: {4 - DefeatedApproachEnemies}";
+                    return;
+                }
                 hint.text = companion.IsBusy ? "Dostun kola gidiyor…" : Vector3.Distance(companion.transform.position, companion.entrance.position) >= 8 ? "Dostunun yanına gelmesini bekle…" : "[E]  Dostunu alçak geçitten kola gönder";
                 if (keys != null && keys.eKey.wasPressedThisFrame && Vector3.Distance(companion.transform.position, companion.entrance.position) < 8)
                     companion.CommandClearObstacle(companion.leverTarget);
