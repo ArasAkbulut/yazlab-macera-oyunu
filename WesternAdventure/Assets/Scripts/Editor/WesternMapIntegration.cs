@@ -303,8 +303,7 @@ namespace WesternAdventure.EditorTools
             visual.transform.SetParent(companionGO.transform, false);
             visual.transform.localPosition = Vector3.zero;
             visual.transform.localRotation = Quaternion.identity;
-            // Varsayılan boyutta oyuncunun yanında çok küçük kalıyordu.
-            visual.transform.localScale = Vector3.one * 1.4f;
+            // Boy ve zemin hizası için: "Köpek Görselini Ayarla (Boy + Zemin)" menüsü.
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             Debug.Log("CompanionDog görseli bağlandı (German Shepherd).");
@@ -556,6 +555,63 @@ namespace WesternAdventure.EditorTools
             Debug.Log($"Muhafız hazinenin başına yerleştirildi ({target}). Boss: " +
                       $"{(bossHealth != null ? bossHealth.name : "yok")}. Kilitlenen bileşenler: {disable.Count}. " +
                       "Test için Ollama'nın çalıştığından emin ol (ollama serve / llama3.2:3b).");
+        }
+
+        /// <summary>
+        /// Köpek görselini oyuncunun bacak boyuna (görünen boyun ~%50'si) ölçekler ve
+        /// ayaklarını CharacterController kapsülünün tabanına indirir. Önceden görsel kökün
+        /// (kapsül merkezinin) hizasına konduğu için köpek havada süzülüyordu.
+        /// </summary>
+        [MenuItem("WesternAdventure/Köpek Görselini Ayarla (Boy + Zemin)")]
+        public static void FitDogVisual()
+        {
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+
+            GameObject dog = GameObject.Find("CompanionDog");
+            GameObject player = GameObject.Find("Player");
+            Transform visual = dog != null ? dog.transform.Find("CompanionDogModel") : null;
+            if (visual == null || player == null)
+            {
+                Debug.LogError("CompanionDog/CompanionDogModel veya Player bulunamadı.");
+                return;
+            }
+
+            const float legRatio = 0.5f;
+            float playerHeight = VisibleHeight(player.transform);
+
+            visual.localScale = Vector3.one;
+            visual.localPosition = Vector3.zero;
+            float dogHeight = VisibleHeight(visual);
+            if (playerHeight > 0.1f && dogHeight > 0.05f)
+            {
+                float factor = Mathf.Clamp(playerHeight * legRatio / dogHeight, 0.3f, 6f);
+                visual.localScale = Vector3.one * factor;
+            }
+
+            // Ayakları kapsülün tabanına hizala.
+            var controller = dog.GetComponent<CharacterController>();
+            float lossyY = dog.transform.lossyScale.y;
+            float capsuleBottom = controller != null
+                ? dog.transform.position.y + (controller.center.y - controller.height * 0.5f) * lossyY
+                : dog.transform.position.y;
+            float visualBottom = VisibleBottom(visual);
+            visual.localPosition = new Vector3(0f, (capsuleBottom - visualBottom) / lossyY, 0f);
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene, ScenePath);
+            Debug.Log($"Köpek ayarlandı: oyuncu {playerHeight:F2} m, köpek {VisibleHeight(visual):F2} m, " +
+                      $"ölçek x{visual.localScale.x:F2}, yükseklik ofseti {visual.localPosition.y:F2}");
+        }
+
+        private static float VisibleBottom(Transform root)
+        {
+            float bottom = float.PositiveInfinity;
+            foreach (Renderer r in root.GetComponentsInChildren<Renderer>())
+            {
+                if (r.enabled) bottom = Mathf.Min(bottom, r.bounds.min.y);
+            }
+            return float.IsPositiveInfinity(bottom) ? root.position.y : bottom;
         }
 
         private static T FindChildComponent<T>(GameObject parent, string childName) where T : Component
