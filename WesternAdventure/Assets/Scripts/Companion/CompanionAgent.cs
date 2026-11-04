@@ -74,6 +74,11 @@ namespace WesternAdventure.Companion
             var moveInput = new Vector3(moveX, 0f, moveZ);
             if (moveInput.sqrMagnitude > 1f) moveInput.Normalize();
 
+            if (moveInput.sqrMagnitude > 0.01f)
+            {
+                moveInput = AvoidObstacles(moveInput);
+            }
+
             if (_controller.isGrounded && _verticalSpeed < 0f)
             {
                 _verticalSpeed = -2f;
@@ -97,6 +102,51 @@ namespace WesternAdventure.Companion
                 AddReward((_previousDistance - distance) * 0.1f);
                 _previousDistance = distance;
             }
+        }
+
+        /// <summary>
+        /// Model eğitim alanından çok daha karmaşık gerçek haritada (kaya/kaktüs vb.) hedefe
+        /// giderken önündeki engele saplanmaması için basit, reaktif bir sapma katmanı.
+        /// Modelin kararını iptal etmez; sadece önü kapalıysa en açık yöne çevirir.
+        /// </summary>
+        private Vector3 AvoidObstacles(Vector3 desiredDirection)
+        {
+            const float rayDistance = 2.5f;
+            const float probeAngle = 45f;
+
+            Vector3 forward = desiredDirection.normalized;
+            Vector3 origin = transform.position + Vector3.up * 1f + forward * 0.6f;
+
+            if (!Physics.Raycast(origin, forward, rayDistance, ~0, QueryTriggerInteraction.Ignore))
+            {
+                return desiredDirection;
+            }
+
+            Vector3 right = Quaternion.Euler(0f, probeAngle, 0f) * forward;
+            Vector3 left = Quaternion.Euler(0f, -probeAngle, 0f) * forward;
+
+            if (!Physics.Raycast(origin, right, rayDistance, ~0, QueryTriggerInteraction.Ignore))
+            {
+                return right * desiredDirection.magnitude;
+            }
+            if (!Physics.Raycast(origin, left, rayDistance, ~0, QueryTriggerInteraction.Ignore))
+            {
+                return left * desiredDirection.magnitude;
+            }
+
+            Vector3 hardRight = Quaternion.Euler(0f, 90f, 0f) * forward;
+            Vector3 hardLeft = Quaternion.Euler(0f, -90f, 0f) * forward;
+
+            if (!Physics.Raycast(origin, hardRight, rayDistance, ~0, QueryTriggerInteraction.Ignore))
+            {
+                return hardRight * desiredDirection.magnitude;
+            }
+            if (!Physics.Raycast(origin, hardLeft, rayDistance, ~0, QueryTriggerInteraction.Ignore))
+            {
+                return hardLeft * desiredDirection.magnitude;
+            }
+
+            return Vector3.zero;
         }
 
         public override void Heuristic(in ActionBuffers actionsOut)
