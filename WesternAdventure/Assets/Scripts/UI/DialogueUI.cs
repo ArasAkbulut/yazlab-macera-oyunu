@@ -32,6 +32,14 @@ namespace WesternAdventure.UI
             dialogueController.OnErrorOccurred -= HandleError;
         }
 
+        /// <summary>Muhafızın açılış repliği gibi LLM'den gelmeyen bir satırı gösterir.</summary>
+        public void ShowLine(string line)
+        {
+            if (thinkingIndicator) thinkingIndicator.SetActive(false);
+            if (errorText) errorText.text = string.Empty;
+            if (replyText) replyText.text = line;
+        }
+
         private void HandleThinkingStarted()
         {
             if (thinkingIndicator) thinkingIndicator.SetActive(true);
@@ -41,7 +49,15 @@ namespace WesternAdventure.UI
         private void HandleReplyReceived(NpcAction action)
         {
             if (thinkingIndicator) thinkingIndicator.SetActive(false);
-            if (replyText) replyText.text = action.reply;
+            if (!replyText) return;
+
+            string line = $"Muhafız: \"{action.reply}\"";
+            int remaining = dialogueController.MaxTurns - dialogueController.CurrentTurn;
+            if (action.GetActionType() == NpcActionType.None && remaining > 0)
+            {
+                line += $"\n<size=24>(Kalan cevap hakkın: {remaining})</size>";
+            }
+            replyText.text = line;
         }
 
         private void HandleError(string message)

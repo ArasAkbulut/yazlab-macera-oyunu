@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace WesternAdventure.NPC
@@ -16,10 +17,21 @@ namespace WesternAdventure.NPC
         private void Awake()
         {
             sendButton.onClick.AddListener(HandleSendClicked);
-            // Legacy InputField.onEndEdit fires both on Enter and on losing focus;
-            // projenin Input System'i (new) kullanması nedeniyle tuş kontrolü yapmıyoruz,
-            // her ikisinde de gönderim kabul edilebilir bir test davranışı.
-            playerInput.onEndEdit.AddListener(_ => HandleSendClicked());
+            // Legacy InputField.onEndEdit hem Enter'da hem de odak kaybında tetiklenir. Odak
+            // kaybında da gönderirsek "Gönder"e tıklamak mesajı iki kez yolluyor (ilki iptal
+            // ediliyordu) ve kutudan tıklayıp çıkmak bile yarım metni gönderiyordu — sadece Enter.
+            playerInput.onEndEdit.AddListener(_ =>
+            {
+                if (IsEnterPressed()) HandleSendClicked();
+            });
+        }
+
+        private static bool IsEnterPressed()
+        {
+            Keyboard keyboard = Keyboard.current;
+            return keyboard != null &&
+                   (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame ||
+                    keyboard.enterKey.isPressed || keyboard.numpadEnterKey.isPressed);
         }
 
         private void HandleSendClicked()

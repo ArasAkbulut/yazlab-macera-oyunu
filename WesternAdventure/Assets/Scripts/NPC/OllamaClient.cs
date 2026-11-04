@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -26,17 +27,27 @@ namespace WesternAdventure.NPC
             _timeoutSeconds = timeoutSeconds;
         }
 
-        public async Task<NpcAction> SendMessageAsync(string systemPrompt, string userMessage, CancellationToken cancellationToken)
+        public async Task<NpcAction> SendMessageAsync(string systemPrompt, IReadOnlyList<DialogueTurn> history,
+            string userMessage, CancellationToken cancellationToken)
         {
+            var messages = new List<OllamaMessage>
+            {
+                new OllamaMessage { role = "system", content = systemPrompt }
+            };
+            if (history != null)
+            {
+                foreach (DialogueTurn turn in history)
+                {
+                    messages.Add(new OllamaMessage { role = turn.Role, content = turn.Content });
+                }
+            }
+            messages.Add(new OllamaMessage { role = "user", content = userMessage });
+
             var request = new OllamaChatRequest
             {
                 model = _model,
                 stream = false,
-                messages = new[]
-                {
-                    new OllamaMessage { role = "system", content = systemPrompt },
-                    new OllamaMessage { role = "user", content = userMessage }
-                }
+                messages = messages.ToArray()
             };
 
             string requestJson = JsonUtility.ToJson(request);
