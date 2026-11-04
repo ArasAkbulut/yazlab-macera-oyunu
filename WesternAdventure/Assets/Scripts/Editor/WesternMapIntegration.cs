@@ -99,7 +99,10 @@ namespace WesternAdventure.EditorTools
                 tempFloor.name = "TEMP_LeverTestFloor";
                 Object.DestroyImmediate(tempFloor.GetComponent<MeshRenderer>());
             }
-            tempFloor.transform.position = new Vector3(leverHandle.transform.position.x, 0f, leverHandle.transform.position.z - 5f);
+            // Yükseklik 2 olduğu için merkez y=-1 -> üst yüzey y=0 (zemin seviyesi). Merkez y=0
+            // olunca üst yüzey y=1'de kalıp kenarında 1 birimlik görünmez duvar oluşturuyordu
+            // (oyuncu ve köpek x≈-267.5 hizasında takılıyordu).
+            tempFloor.transform.position = new Vector3(leverHandle.transform.position.x, -1f, leverHandle.transform.position.z - 5f);
             // Köpek, gerçek engellerden kaçınırken yana doğru sapabiliyor; platform dar olursa
             // bu sapma onu bitmemiş zeminin dışına, boşluğa düşürüyordu. Bolca pay bırakıldı.
             tempFloor.transform.localScale = new Vector3(70f, 2f, 60f);

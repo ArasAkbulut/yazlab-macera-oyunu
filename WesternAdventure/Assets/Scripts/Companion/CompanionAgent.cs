@@ -33,9 +33,14 @@ namespace WesternAdventure.Companion
                  "Eğitim/test sahnelerinde boş bırakılmalı (model kontrolü devam eder).")]
         [SerializeField] private Transform followTarget;
         [SerializeField] private float leashDistance = 5f;
-        [Tooltip("obstacleTarget'a bu mesafeden yakınsa, fiziksel trigger'ı beklemeden doğrudan " +
-                 "'engel aşıldı' sayılır.")]
+        [Tooltip("Takip modunda: oyuncu obstacleTarget'a (lever) bu mesafeden yakınsa köpek " +
+                 "oyuncunun yanından ayrılıp lever'e gider.")]
         [SerializeField] private float noticeDistance = 10f;
+        [Tooltip("Takip modunda: köpek lever'e (yatay) bu mesafeden yakınsa lever çekilmiş " +
+                 "sayılır, ardından köpek oyuncunun yanına geri döner.")]
+        [SerializeField] private float leverReachDistance = 2.5f;
+
+        private bool _fetchingLever;
 
         private CharacterController _controller;
         private Vector3 _startPosition;
@@ -94,41 +99,45 @@ namespace WesternAdventure.Companion
 
         public override void OnActionReceived(ActionBuffers actions)
         {
-            if (!IsBusy) return;
-
-            // Lever'e (obstacleTarget) yeterince yakınsa, fiziksel trigger'ı beklemeden
-            // doğrudan "engel aşıldı" say — gerçek haritanın bitmemiş/karmaşık kısımlarında
-            // tam temas etmek güvenilir olmuyordu.
-            if (obstacleTarget != null)
-            {
-                float leverDistance = Vector3.Distance(transform.position, obstacleTarget.position);
-                if (leverDistance <= noticeDistance)
-                {
-                    // obstacleTarget'ı temizlemeden NotifyObstacleCleared() -> EndEpisode() ->
-                    // OnEpisodeBegin() IsBusy'yi tekrar true yapardı ve bu kontrol her frame
-                    // yeniden tetiklenip sonsuz döngü oluştururdu.
-                    obstacleTarget = null;
-                    NotifyObstacleCleared();
-                    return;
-                }
-            }
+            // Takip modunda (gerçek oyun) köpek görev bitince de oyuncuyu takip etmeye devam
+            // etmeli; sadece model modunda (eğitim/test) boşta beklenir.
+            if (!IsBusy && followTarget == null) return;
 
             Vector3 moveInput;
+            Transform hopGoal = obstacleTarget;
             if (followTarget != null)
             {
-                // Gerçek oyun sahnesi: model yerine basit, güvenilir bir takip — köpek
-                // oyuncudan leashDistance'tan fazla kopmaz (haritanın bitmemiş kısımlarında
-                // serbest navigasyon/model çok güvenilmezdi).
-                float distanceToPlayer = Vector3.Distance(transform.position, followTarget.position);
-                if (distanceToPlayer > leashDistance)
+                // Gerçek oyun sahnesi: model yerine basit, güvenilir bir durum makinesi:
+                //   Takip  -> oyuncudan leashDistance'tan fazla kopma.
+                //   Getir  -> oyuncu lever'e noticeDistance kadar yaklaştıysa (ama oyuncu
+                //             oraya kendisi ulaşamıyor) köpek lever'e gider, çeker.
+                //   Dönüş  -> lever çekilince obstacleTarget temizlenir, Takip'e geri dönülür.
+                if (!_fetchingLever && obstacleTarget != null &&
+                    HorizontalDistance(followTarget.position, obstacleTarget.position) <= noticeDistance)
                 {
-                    Vector3 toPlayer = followTarget.position - transform.position;
-                    toPlayer.y = 0f;
-                    moveInput = toPlayer.sqrMagnitude > 0.0001f ? toPlayer.normalized : Vector3.zero;
+                    _fetchingLever = true;
+                }
+
+                if (_fetchingLever && obstacleTarget != null)
+                {
+                    if (HorizontalDistance(transform.position, obstacleTarget.position) <= leverReachDistance)
+                    {
+                        // obstacleTarget'ı temizlemeden NotifyObstacleCleared() -> EndEpisode() ->
+                        // OnEpisodeBegin() IsBusy'yi tekrar true yapardı.
+                        _fetchingLever = false;
+                        obstacleTarget = null;
+                        NotifyObstacleCleared();
+                        return;
+                    }
+                    moveInput = HorizontalDirectionTo(obstacleTarget.position);
                 }
                 else
                 {
-                    moveInput = Vector3.zero;
+                    _fetchingLever = false;
+                    hopGoal = followTarget;
+                    moveInput = HorizontalDistance(transform.position, followTarget.position) > leashDistance
+                        ? HorizontalDirectionTo(followTarget.position)
+                        : Vector3.zero;
                 }
             }
             else
@@ -166,7 +175,7 @@ namespace WesternAdventure.Companion
                 // Köşeye/engele saplanıp dönerek yerinde sayma durumu: 45°/90° kaçınma bile
                 // yetmiyorsa, bir süre hiç ilerleme olmadığını tespit edip geriye + yana doğru
                 // zorlayıcı bir kaçış manevrası uygula.
-                moveInput = ApplyStuckRecovery(moveInput);
+                moveInput = ApplyStuckRecovery(moveInput, hopGoal);
             }
 
             if (_controller.isGrounded && _verticalSpeed < 0f)
@@ -264,7 +273,7 @@ namespace WesternAdventure.Companion
         /// Bir süre neredeyse hiç yer değiştirmeden (saplanmış) kalınırsa, istenen yönü bir
         /// süreliğine geriye + yana doğru zorlayıcı bir kaçış vektörüyle değiştirir.
         /// </summary>
-        private Vector3 ApplyStuckRecovery(Vector3 desiredDirection)
+        private Vector3 ApplyStuckRecovery(Vector3 desiredDirection, Transform hopGoal)
         {
             const float checkInterval = 1f;
             const float stuckDistance = 0.4f;
@@ -299,9 +308,9 @@ namespace WesternAdventure.Companion
             // (yukarı kalkıp öne ışınlanıp düşerek) engeli aşmayı dene — gerçek oyunda
             // bulmacanın tamamlanabilir kalması bu tür köşe durumlardan daha önemli.
             const float hopThreshold = 6f;
-            if (_cumulativeStuckTime >= hopThreshold && obstacleTarget != null)
+            if (_cumulativeStuckTime >= hopThreshold && hopGoal != null)
             {
-                Vector3 toTarget = obstacleTarget.position - transform.position;
+                Vector3 toTarget = hopGoal.position - transform.position;
                 toTarget.y = 0f;
                 if (toTarget.sqrMagnitude > 0.0001f)
                 {
@@ -321,6 +330,20 @@ namespace WesternAdventure.Companion
             _unstuckDirection = (away + sideways).normalized;
             _unstuckTimer = recoveryDuration;
             return _unstuckDirection;
+        }
+
+        private static float HorizontalDistance(Vector3 a, Vector3 b)
+        {
+            a.y = 0f;
+            b.y = 0f;
+            return Vector3.Distance(a, b);
+        }
+
+        private Vector3 HorizontalDirectionTo(Vector3 point)
+        {
+            Vector3 to = point - transform.position;
+            to.y = 0f;
+            return to.sqrMagnitude > 0.0001f ? to.normalized : Vector3.zero;
         }
 
         public override void Heuristic(in ActionBuffers actionsOut)
