@@ -60,8 +60,13 @@ namespace WesternAdventure.Companion
 
         public override void CollectObservations(VectorSensor sensor)
         {
-            sensor.AddObservation(transform.position);
-            sensor.AddObservation(obstacleTarget != null ? obstacleTarget.position : Vector3.zero);
+            // Mutlak dünya konumu yerine göreli vektör kullanılıyor: model böylece haritanın
+            // neresinde olursa olsun (eğitim alanı küçük/yerel koordinatlar, gerçek oyun
+            // haritası ise yüzlerce birim) aynı ölçekte girdi görür ve genelleyebilir.
+            Vector3 toTarget = obstacleTarget != null
+                ? obstacleTarget.position - transform.position
+                : Vector3.zero;
+            sensor.AddObservation(toTarget);
             sensor.AddObservation(_controller.velocity);
         }
 

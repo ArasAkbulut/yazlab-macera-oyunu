@@ -105,7 +105,7 @@ namespace WesternAdventure.EditorTools
             Debug.Log(
                 "WesternMap entegrasyonu tamamlandı.\n" +
                 "ŞİMDİ ELLE YAPILMASI GEREKENLER (CompanionDog objesini seç, Inspector'da):\n" +
-                "1) Behavior Parameters -> Behavior Name: 'Companion', Vector Observation Space Size: 9, " +
+                "1) Behavior Parameters -> Behavior Name: 'Companion', Vector Observation Space Size: 6, " +
                 "Continuous Actions: 2, Behavior Type: Default\n" +
                 "2) Decision Requester -> Decision Period: 5\n" +
                 "3) CompanionAgent -> Max Step: 1000\n" +
