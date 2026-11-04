@@ -9151,6 +9151,7 @@ MonoBehaviour:
   gravity: -20
   obstacleTarget: {fileID: 651722282}
   returnToStartOnEpisodeBegin: 0
+  followTarget: {fileID: 1483053196}
 --- !u!114 &1466261878
 MonoBehaviour:
   m_ObjectHideFlags: 0

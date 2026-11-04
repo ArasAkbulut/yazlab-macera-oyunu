@@ -28,6 +28,14 @@ namespace WesternAdventure.Companion
                  "görevi tekrar dener. Gerçek oyun sahnesinde false: engeli bir kez aştıktan sonra " +
                  "olduğu yerde kalır (sürekli başa ışınlanıp tekrar yürümez).")]
         [SerializeField] private bool returnToStartOnEpisodeBegin = true;
+        [Tooltip("Atanırsa (gerçek oyun sahnesi): model yerine basit, güvenilir bir takip " +
+                 "davranışı kullanılır — köpek bu hedeften leashDistance'tan fazla uzaklaşmaz. " +
+                 "Eğitim/test sahnelerinde boş bırakılmalı (model kontrolü devam eder).")]
+        [SerializeField] private Transform followTarget;
+        [SerializeField] private float leashDistance = 5f;
+        [Tooltip("obstacleTarget'a bu mesafeden yakınsa, fiziksel trigger'ı beklemeden doğrudan " +
+                 "'engel aşıldı' sayılır.")]
+        [SerializeField] private float noticeDistance = 10f;
 
         private CharacterController _controller;
         private Vector3 _startPosition;
@@ -56,6 +64,9 @@ namespace WesternAdventure.Companion
                 transform.position = _startPosition;
                 _controller.enabled = true;
                 _verticalSpeed = 0f;
+                // Eğitim/test sahnelerinde her episode tekrar denendiği için olay her
+                // başarıda yeniden tetiklenebilsin; gerçek oyunda (false) bir kere yeter.
+                _obstacleClearedNotified = false;
             }
 
             IsBusy = obstacleTarget != null;
@@ -85,30 +96,66 @@ namespace WesternAdventure.Companion
         {
             if (!IsBusy) return;
 
-            float moveX = actions.ContinuousActions[0];
-            float moveZ = actions.ContinuousActions[1];
-            var moveInput = new Vector3(moveX, 0f, moveZ);
-            if (moveInput.sqrMagnitude > 1f) moveInput.Normalize();
-
-            // Model, eğitim alanındaki mesafe aralığının (~17 birim) dışında güvenilir değil —
-            // gerçek haritada hedef çok daha uzakta olabiliyor ve model tamamen yanlış yöne
-            // sürüklenebiliyor. Mesafe eğitim aralığını aştıkça, modelin kararına hedefe-doğru
-            // bir çekim karıştırılıyor; yakınken (eğitildiği aralıkta) modele tam güveniliyor.
-            const float trainedRange = 18f;
-            const float blendRange = 20f;
+            // Lever'e (obstacleTarget) yeterince yakınsa, fiziksel trigger'ı beklemeden
+            // doğrudan "engel aşıldı" say — gerçek haritanın bitmemiş/karmaşık kısımlarında
+            // tam temas etmek güvenilir olmuyordu.
             if (obstacleTarget != null)
             {
-                float distance = Vector3.Distance(transform.position, obstacleTarget.position);
-                if (distance > trainedRange)
+                float leverDistance = Vector3.Distance(transform.position, obstacleTarget.position);
+                if (leverDistance <= noticeDistance)
                 {
-                    Vector3 toTarget = obstacleTarget.position - transform.position;
-                    toTarget.y = 0f;
-                    if (toTarget.sqrMagnitude > 0.0001f)
+                    // obstacleTarget'ı temizlemeden NotifyObstacleCleared() -> EndEpisode() ->
+                    // OnEpisodeBegin() IsBusy'yi tekrar true yapardı ve bu kontrol her frame
+                    // yeniden tetiklenip sonsuz döngü oluştururdu.
+                    obstacleTarget = null;
+                    NotifyObstacleCleared();
+                    return;
+                }
+            }
+
+            Vector3 moveInput;
+            if (followTarget != null)
+            {
+                // Gerçek oyun sahnesi: model yerine basit, güvenilir bir takip — köpek
+                // oyuncudan leashDistance'tan fazla kopmaz (haritanın bitmemiş kısımlarında
+                // serbest navigasyon/model çok güvenilmezdi).
+                float distanceToPlayer = Vector3.Distance(transform.position, followTarget.position);
+                if (distanceToPlayer > leashDistance)
+                {
+                    Vector3 toPlayer = followTarget.position - transform.position;
+                    toPlayer.y = 0f;
+                    moveInput = toPlayer.sqrMagnitude > 0.0001f ? toPlayer.normalized : Vector3.zero;
+                }
+                else
+                {
+                    moveInput = Vector3.zero;
+                }
+            }
+            else
+            {
+                float moveX = actions.ContinuousActions[0];
+                float moveZ = actions.ContinuousActions[1];
+                moveInput = new Vector3(moveX, 0f, moveZ);
+                if (moveInput.sqrMagnitude > 1f) moveInput.Normalize();
+
+                // Model, eğitim alanındaki mesafe aralığının (~17 birim) dışında güvenilir
+                // değil — mesafe arttıkça modelin kararına hedefe-doğru bir çekim karıştırılıyor.
+                const float trainedRange = 18f;
+                const float blendRange = 20f;
+                if (obstacleTarget != null)
+                {
+                    float distance = Vector3.Distance(transform.position, obstacleTarget.position);
+                    if (distance > trainedRange)
                     {
-                        Vector3 seekDirection = toTarget.normalized;
-                        float blend = Mathf.Clamp01((distance - trainedRange) / blendRange);
-                        moveInput = Vector3.Lerp(moveInput, seekDirection, blend);
-                        if (moveInput.sqrMagnitude > 1f) moveInput.Normalize();
+                        Vector3 toTarget = obstacleTarget.position - transform.position;
+                        toTarget.y = 0f;
+                        if (toTarget.sqrMagnitude > 0.0001f)
+                        {
+                            Vector3 seekDirection = toTarget.normalized;
+                            float blend = Mathf.Clamp01((distance - trainedRange) / blendRange);
+                            moveInput = Vector3.Lerp(moveInput, seekDirection, blend);
+                            if (moveInput.sqrMagnitude > 1f) moveInput.Normalize();
+                        }
                     }
                 }
             }
@@ -116,12 +163,11 @@ namespace WesternAdventure.Companion
             if (moveInput.sqrMagnitude > 0.01f)
             {
                 moveInput = AvoidObstacles(moveInput);
+                // Köşeye/engele saplanıp dönerek yerinde sayma durumu: 45°/90° kaçınma bile
+                // yetmiyorsa, bir süre hiç ilerleme olmadığını tespit edip geriye + yana doğru
+                // zorlayıcı bir kaçış manevrası uygula.
+                moveInput = ApplyStuckRecovery(moveInput);
             }
-
-            // Köşeye/engele saplanıp dönerek yerinde sayma durumu: 45°/90° kaçınma bile
-            // yetmiyorsa (ör. içbükey köşe), bir süre hiç ilerleme olmadığını tespit edip
-            // geriye + yana doğru zorlayıcı bir kaçış manevrası uygula.
-            moveInput = ApplyStuckRecovery(moveInput);
 
             if (_controller.isGrounded && _verticalSpeed < 0f)
             {
@@ -303,12 +349,18 @@ namespace WesternAdventure.Companion
             RequestDecision();
         }
 
+        private bool _obstacleClearedNotified;
+
         /// <summary>Engel/hedef aşıldığında tetiklenecek trigger/collision koduyla çağrılmalıdır.</summary>
         public void NotifyObstacleCleared()
         {
             IsBusy = false;
             SetReward(1f);
-            Core.GameEvents.RaiseCompanionClearedObstacle();
+            if (!_obstacleClearedNotified)
+            {
+                _obstacleClearedNotified = true;
+                Core.GameEvents.RaiseCompanionClearedObstacle();
+            }
             EndEpisode();
         }
     }

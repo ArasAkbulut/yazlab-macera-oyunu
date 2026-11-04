@@ -85,6 +85,9 @@ namespace WesternAdventure.EditorTools
             // Gerçek oyun sahnesinde köpek, kapıyı bir kez açtıktan sonra başlangıç noktasına
             // ışınlanıp tekrar yürümeye başlamamalı — olduğu yerde kalmalı.
             SetPrivateField(companionAgent, "returnToStartOnEpisodeBegin", false);
+            // Haritanın bitmemiş/karmaşık kısımlarında serbest model navigasyonu güvenilir
+            // değildi; köpek oyuncuyu takip etsin, lever'e yeterince yaklaşınca da otomatik açsın.
+            SetPrivateField(companionAgent, "followTarget", player.transform);
 
             // 4) GEÇİCİ test zemini: bu alandaki terrain/collider arkadaş tarafından henüz
             //    bitmediği için (kendi notlarında da belirtmiş), test sırasında köpeğin
