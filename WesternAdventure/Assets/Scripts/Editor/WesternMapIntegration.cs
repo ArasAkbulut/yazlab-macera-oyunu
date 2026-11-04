@@ -97,7 +97,9 @@ namespace WesternAdventure.EditorTools
                 Object.DestroyImmediate(tempFloor.GetComponent<MeshRenderer>());
             }
             tempFloor.transform.position = new Vector3(leverHandle.transform.position.x, 0f, leverHandle.transform.position.z - 5f);
-            tempFloor.transform.localScale = new Vector3(20f, 1f, 25f);
+            // Köpek, gerçek engellerden kaçınırken yana doğru sapabiliyor; platform dar olursa
+            // bu sapma onu bitmemiş zeminin dışına, boşluğa düşürüyordu. Bolca pay bırakıldı.
+            tempFloor.transform.localScale = new Vector3(70f, 2f, 60f);
 
             Directory_CreateDirectoryForScenes();
             EditorSceneManager.SaveScene(scene, ScenePath);
