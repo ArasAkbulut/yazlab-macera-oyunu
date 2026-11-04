@@ -13,6 +13,7 @@ public class ThirdPersonCamera : MonoBehaviour
     [SerializeField] private float collisionRadius = 0.3f;
     [SerializeField] private float collisionPadding = 0.05f;
 
+    public bool externalCursorControl;
     private float yaw;
     private float pitch = 20f;
 
@@ -37,11 +38,11 @@ public class ThirdPersonCamera : MonoBehaviour
         Keyboard keyboard = Keyboard.current;
         Mouse mouse = Mouse.current;
 
-        if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
+        if (!externalCursorControl && keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
         {
             SetCursorLocked(false);
         }
-        else if (mouse != null && mouse.leftButton.wasPressedThisFrame &&
+        else if (!externalCursorControl && mouse != null && mouse.leftButton.wasPressedThisFrame &&
                  Cursor.lockState != CursorLockMode.Locked)
         {
             SetCursorLocked(true);

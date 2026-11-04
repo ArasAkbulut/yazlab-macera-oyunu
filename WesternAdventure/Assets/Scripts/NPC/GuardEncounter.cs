@@ -42,6 +42,9 @@ namespace WesternAdventure.NPC
         [Header("Durum (sadece izleme)")]
         [SerializeField] private State state = State.WaitingForBoss;
 
+        public AdventureFlow adventure;
+        public bool IsConversationOpen { get; private set; }
+        public bool Passed { get; private set; }
         private bool _mustLeaveFirst;
         private PlayerHealth _playerHealth;
 
@@ -58,6 +61,7 @@ namespace WesternAdventure.NPC
 
         private void Update()
         {
+            if (Time.timeScale == 0 || (adventure != null && !adventure.CanMeetGuard)) return;
             switch (state)
             {
                 case State.WaitingForBoss:
@@ -97,6 +101,7 @@ namespace WesternAdventure.NPC
 
         private void StartConversation()
         {
+            IsConversationOpen = true;
             state = State.Talking;
             Subscribe();
             Debug.Log("[Muhafız] Konuşma başladı.", this);
@@ -108,7 +113,7 @@ namespace WesternAdventure.NPC
             {
                 dialogueUI.ShowLine(
                     $"Muhafız: \"{openingQuestion}\"\n" +
-                    $"<size=16>({dialogueController.MaxTurns} cevap hakkın var. Kutuya tıkla, yaz, Enter'a bas. Çıkmak için Esc.)</size>");
+                    $"<size=24>({dialogueController.MaxTurns} cevap hakkın var. Kutuya tıkla, yaz, Enter'a bas. Çıkmak için Esc.)</size>");
             }
 
             SetPlayerControls(false);
@@ -143,17 +148,20 @@ namespace WesternAdventure.NPC
         {
             // Oyuncu muhafızın son repliğini okuyabilsin diye panel bir süre açık kalır.
             if (playerInput != null) playerInput.interactable = false;
-            yield return new WaitForSeconds(closeDelay);
+            yield return new WaitForSecondsRealtime(closeDelay);
 
             if (stepAside)
             {
                 transform.position += transform.rotation * stepAsideOffset;
             }
             CloseConversation();
+            Passed = stepAside;
         }
 
         private void CloseConversation()
         {
+            IsConversationOpen = false;
+            dialogueController.ResetConversation();
             Unsubscribe();
             if (dialogueCanvas != null) dialogueCanvas.SetActive(false);
             if (playerInput != null) playerInput.interactable = true;
