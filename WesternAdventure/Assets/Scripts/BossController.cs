@@ -26,8 +26,6 @@ public class BossController : MonoBehaviour
     [Header("Saldiri")]
     [SerializeField] private float attackRange = 3.5f;
     [SerializeField] private int attackDamage = 20;
-    [SerializeField] private float hitDelay = 0.55f;
-    [SerializeField] private float attackDuration = 1.5f;
 
     [Range(1f, 180f)]
     [SerializeField] private float attackAngle = 120f;
@@ -40,8 +38,8 @@ public class BossController : MonoBehaviour
 
     private float combatEndTime;
     private float restEndTime;
-    private float attackEndTime;
-    private float hitTime;
+    private float attackRequestDeadline;
+    private bool attackAnimationStarted;
     private float nextPathUpdate;
     private bool hitProcessed;
 
@@ -179,11 +177,9 @@ public class BossController : MonoBehaviour
         currentState = BossState.Attacking;
         hitProcessed = false;
 
-        float delay = Mathf.Max(0f, hitDelay);
-
-        hitTime = Time.time + delay;
-        attackEndTime = Time.time +
-            Mathf.Max(attackDuration, delay + 0.1f);
+        attackAnimationStarted = false;
+        // If a transition cannot start, cancel safely without dealing invisible damage.
+        attackRequestDeadline = Time.time + 1f;
 
         bossAnimator.ResetTrigger(Attack);
         bossAnimator.SetTrigger(Attack);
@@ -192,29 +188,37 @@ public class BossController : MonoBehaviour
     private void UpdateAttack()
     {
         StopMoving();
+        bool playingAttack = bossAnimator.GetCurrentAnimatorStateInfo(0).IsName("Attack");
+        bool enteringAttack = bossAnimator.IsInTransition(0) &&
+            bossAnimator.GetNextAnimatorStateInfo(0).IsName("Attack");
+        if (playingAttack || enteringAttack)
+        {
+            attackAnimationStarted = true;
+            return;
+        }
 
-        // Her saldýrýda yalnýzca bir kez hasar kontrolü yap.
-        if (!hitProcessed && Time.time >= hitTime)
+        // The full animation, including recovery/exit blending, owns attack duration.
+        if (attackAnimationStarted || Time.time >= attackRequestDeadline)
         {
             hitProcessed = true;
-
-            if (CanHitPlayer())
-            {
-                playerHealth.TakeDamage(attackDamage);
-            }
+            bossAnimator.ResetTrigger(Attack);
+            if (Time.time >= combatEndTime) BeginRest();
+            else currentState = BossState.Fighting;
         }
+    }
 
-        if (Time.time >= attackEndTime)
-        {
-            if (Time.time >= combatEndTime)
-            {
-                BeginRest();
-            }
-            else
-            {
-                currentState = BossState.Fighting;
-            }
-        }
+    // Called by the boss-only attack clip at its impact frame (frame 30 / 30 fps).
+    public void OnAttackImpact()
+    {
+        if (!isActiveAndEnabled || currentState != BossState.Attacking || hitProcessed ||
+            bossAnimator == null || playerHealth == null || player == null) return;
+        if (!bossAnimator.GetCurrentAnimatorStateInfo(0).IsName("Attack")) return;
+        // An interrupted, fading-out swing must not deal damage.
+        if (bossAnimator.IsInTransition(0) &&
+            !bossAnimator.GetNextAnimatorStateInfo(0).IsName("Attack")) return;
+
+        hitProcessed = true;
+        if (CanHitPlayer()) playerHealth.TakeDamage(attackDamage);
     }
 
     private bool CanHitPlayer()
