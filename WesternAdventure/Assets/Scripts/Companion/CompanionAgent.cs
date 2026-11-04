@@ -38,6 +38,7 @@ namespace WesternAdventure.Companion
         private Vector3 _stuckCheckPosition;
         private float _unstuckTimer;
         private Vector3 _unstuckDirection;
+        private float _cumulativeStuckTime;
 
         public bool IsBusy { get; private set; }
 
@@ -65,6 +66,7 @@ namespace WesternAdventure.Companion
             _stuckCheckTimer = 0f;
             _stuckCheckPosition = transform.position;
             _unstuckTimer = 0f;
+            _cumulativeStuckTime = 0f;
         }
 
         public override void CollectObservations(VectorSensor sensor)
@@ -240,7 +242,32 @@ namespace WesternAdventure.Companion
 
             if (moved >= stuckDistance || desiredDirection.sqrMagnitude < 0.01f)
             {
+                _cumulativeStuckTime = 0f;
                 return desiredDirection;
+            }
+
+            _cumulativeStuckTime += checkInterval;
+
+            // Kaçış manevrası tekrar tekrar yetersiz kalıyorsa (ör. kayanın/dağın içine
+            // gömülmüş), uzun süre (6 sn+) ilerleme olmadığında hedefe doğru "atlayarak"
+            // (yukarı kalkıp öne ışınlanıp düşerek) engeli aşmayı dene — gerçek oyunda
+            // bulmacanın tamamlanabilir kalması bu tür köşe durumlardan daha önemli.
+            const float hopThreshold = 6f;
+            if (_cumulativeStuckTime >= hopThreshold && obstacleTarget != null)
+            {
+                Vector3 toTarget = obstacleTarget.position - transform.position;
+                toTarget.y = 0f;
+                if (toTarget.sqrMagnitude > 0.0001f)
+                {
+                    Vector3 hopDirection = toTarget.normalized;
+                    _controller.enabled = false;
+                    transform.position += hopDirection * 4f + Vector3.up * 3f;
+                    _controller.enabled = true;
+                    _verticalSpeed = 0f;
+                }
+                _cumulativeStuckTime = 0f;
+                _unstuckTimer = 0f;
+                return Vector3.zero;
             }
 
             Vector3 away = -desiredDirection.normalized;
