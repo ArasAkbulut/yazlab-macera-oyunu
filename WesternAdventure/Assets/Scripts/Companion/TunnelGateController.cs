@@ -35,6 +35,8 @@ namespace WesternAdventure.Companion
 
             var col = GetComponent<Collider>();
             if (col != null) col.enabled = false;
+            var obstacle = GetComponent<UnityEngine.AI.NavMeshObstacle>();
+            if (obstacle != null) obstacle.enabled = false;
         }
 
         private void Update()
