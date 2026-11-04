@@ -44,16 +44,13 @@ namespace WesternAdventure.Companion
 
         public override void OnEpisodeBegin()
         {
-            if (!returnToStartOnEpisodeBegin)
+            if (returnToStartOnEpisodeBegin)
             {
-                IsBusy = false;
-                return;
+                _controller.enabled = false;
+                transform.position = _startPosition;
+                _controller.enabled = true;
+                _verticalSpeed = 0f;
             }
-
-            _controller.enabled = false;
-            transform.position = _startPosition;
-            _controller.enabled = true;
-            _verticalSpeed = 0f;
 
             IsBusy = obstacleTarget != null;
             _previousDistance = obstacleTarget != null
