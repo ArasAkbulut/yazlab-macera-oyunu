@@ -42,3 +42,13 @@ Prefablar ve sahne normal Unity araçlarıyla düzenlenebilir.
 Kontrol ayrıca dönüşte kapıdan fiziksel geçişi, muhafızın konuşma kilidini ve sonucun beklenmesini sınar.
 Otomatik kontrol muhafızın başarı olayını tetikler; gerçek LLM yanıt kalitesini sınamaz.
 Testler sahneyi Play Mode dışında değiştirmez.
+
+## Kanyon sınırları
+
+`Canyon Boundary` sahne grubu dış dağ hattındaki açıklıkları kapatır. Kapı hizasındaki bölücü kaya hattı kuzey ve güney sınırlara birleşir; iki alan arasındaki tek açıklık kapıdır. Taş kemer kapının üzerinden atlamayı engeller. Kayalıkların içindeki yüksek çarpışma sınırları, komşu dağ modellerine tırmanarak harita dışına çıkmayı da önler.
+
+Geometri ve malzemeler proje içinde üretildi; yeni bir ücretli veya harici asset kullanılmadı. NavMesh yeni çarpışma sınırlarıyla yeniden oluşturuldu. Kaya sınırlarının üstü yürünebilir alan sayılmaz.
+
+- Yeniden oluştur: `WesternAdventure > Polish > Seal Canyon Boundaries` (WesternMap açıkken).
+- Sınır testi: `WesternAdventure > Polish > Check Canyon Boundaries`. Gerçek CharacterController ile 1.076 geçiş denemesi, kapalı kapının alternatif NavMesh rotası ve açık kapıdan iki yönde geçiş kontrol edilir.
+- Tam akış testi: `WesternAdventure > Polish > Run Gameplay Checks`. Köpek, kol, kapı ve muhafıza dönüş akışını kontrol eder.
