@@ -413,6 +413,12 @@ namespace WesternAdventure.EditorTools
         [MenuItem("WesternAdventure/Muhafızı Hazinenin Başına Yerleştir")]
         public static void PlaceGuardAtTreasure()
         {
+            // Oyun akışında (AdventureFlow / Polish > Build Adventure) muhafız artık tünel dönüş
+            // yolunda; bu menü onu tekrar hazinenin yanına taşır. Yanlışlıkla çalıştırılmasın.
+            if (!EditorUtility.DisplayDialog("Muhafızı taşı?",
+                    "Muhafız şu an AdventureFlow'un dönüş yolundaki konumunda. Bu menü onu hazinenin " +
+                    "yanına taşır ve diyalog panelini yeniden düzenler. Devam edilsin mi?",
+                    "Evet, taşı", "Vazgeç")) return;
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
             var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
 

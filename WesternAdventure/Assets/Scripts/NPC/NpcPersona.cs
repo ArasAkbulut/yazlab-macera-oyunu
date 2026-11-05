@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace WesternAdventure.NPC
@@ -14,47 +15,74 @@ namespace WesternAdventure.NPC
 
         [TextArea(3, 6)]
         [SerializeField] private string backstoryAndGoal =
-            "Sen, Golem'in koruduğu hazinenin başında bekleyen sert, güvenmeyen bir muhafızsın. Oyuncu Golem'i yendi ve hazineye uzandı; sen önünü kestin. Hazineyi gerçekten hak edip etmediğine, oyuncunun sana anlatacaklarına bakarak sen karar vereceksin. İkna olursan kenara çekilip hazineyi almasına izin verirsin (open_door); olmazsan onu alt edersin (attack_player).";
+            "Sen, Golem'in tünelindeki çıkışı bekleyen sert, güvenmeyen bir muhafızsın. Oyuncu Golem'i yendi, hazineyi aldı ve tünelden geri dönüyor; sen önünü kestin. Hazineyi gerçekten hak edip etmediğine, oyuncunun sana anlatacaklarına bakarak sen karar vereceksin. İkna olursan kenara çekilip hazineyle geçmesine izin verirsin (open_door); olmazsan onu alt edersin (attack_player).";
 
         [SerializeField] private int maxConversationTurns = 3;
 
         public int MaxConversationTurns => maxConversationTurns;
 
+        [Tooltip("Son tur dışındaki her turda muhafızın soracağı sorgu sorusu (sırayla). Küçük yerel " +
+                 "modeller serbest 'takip sorusu üret' talimatında konudan sapıp kendinden bahsetmeye " +
+                 "başlıyordu; sabit bir soru iskeleti sorgulamayı tutarlı tutuyor.")]
+        [SerializeField] private string[] interrogationQuestions =
+        {
+            "Sana neden güveneyim? Daha önce kimin için ne yaptın?",
+            "Sözünü tutacağını nereden bileyim?"
+        };
+
+        [Header("Karar repliği (kod tarafı, kararla her zaman uyumlu)")]
+        [SerializeField] private string passLine = "Sözlerin tutarlı, niyetin temiz. Geç bakalım yolcu, hazine senin.";
+        [SerializeField] private string failLine = "Seni dinledim ama ikna olmadım. Bu hazineyle buradan geçemezsin!";
+        [SerializeField] private string insultLine = "Bana bu şekilde konuşmanın bedelini ödeyeceksin!";
+
+        public string PassLine => passLine;
+        public string FailLine => failLine;
+        public string InsultLine => insultLine;
+
+        /// <summary>turn. cevaptan sonra muhafızın soracağı sorgu sorusu (son tur için yok).</summary>
+        public string GetQuestionAfterTurn(int turn)
+        {
+            if (interrogationQuestions == null || interrogationQuestions.Length == 0) return "Sana neden güveneyim?";
+            return interrogationQuestions[Mathf.Clamp(turn - 1, 0, interrogationQuestions.Length - 1)];
+        }
+
+        /// <summary>
+        /// Muhafız her turda konuşmanın tamamını (soru/cevap dökümü) okuyup değerlendirme alanlarını
+        /// doldurur ve son cevaba kısa bir tepki yazar. Karar ve sıradaki soru kod tarafındadır.
+        /// </summary>
         public string BuildSystemPrompt(int currentTurn)
         {
-            bool isFinalTurn = currentTurn >= maxConversationTurns;
-            string turnInstruction = isFinalTurn
-                ? $"- ŞU AN SON TUR (tur {currentTurn}/{maxConversationTurns}). Artık soru sorma. Konuşma geçmişindeki " +
-                  "TÜM cevapları birlikte değerlendir ve KESİNLİKLE \"open_door\" ya da \"attack_player\" seç; " +
-                  "\"none\" kullanma. Cevaplar tutarlıysa ve hazineyi başkalarına fayda sağlayacak bir amaç için " +
-                  "isteyen, güvenilir biri izlenimi verdiyse \"open_door\"; açgözlü, tutarsız, kaçamak ya da " +
-                  "saçma cevaplar verdiyse \"attack_player\". Kararını kısa bir cümleyle açıkla.\n"
-                : $"- Şu an tur {currentTurn}/{maxConversationTurns} (son tur değil). Oyuncuyu SORGULA: kararını henüz " +
-                  "verme, \"action\" alanını \"none\" yap ve oyuncunun SON cevabındaki bir ayrıntıya dayanan TEK, " +
-                  "somut bir takip sorusu sor. \"reply\" bir soru işaretiyle bitmeli.\n" +
-                  "- Sorgularken şu sırayı izle: önce hazineyle tam olarak ne yapacağını, sonra neden ona " +
-                  "güvenmen gerektiğini (geçmişte kimin için ne yaptığını) sor. Daha önce sorduğun bir soruyu " +
-                  "tekrar sorma; cevap kaçamaksa üstüne git.\n" +
-                  "- TEK İSTİSNA: Oyuncu sana hakaret eder ya da açıkça saygısızlık ederse sorgulamayı bırak ve " +
-                  "hemen \"attack_player\" seç.\n";
-
             return
                 $"Sen bir western macera oyunundaki NPC'sin. İsmin: {npcName}.\n" +
-                $"Karakterin ve amacın: {backstoryAndGoal}\n\n" +
-                "Senaryo:\n" +
-                "- Oyuncuya \"Hazineye neden layıksın?\" diye zaten sordun (konuşma geçmişinde var); bu soruyu " +
-                "tekrar sorma.\n" +
-                $"- Oyuncunun en fazla {maxConversationTurns} cevap hakkı var. Sert, şüpheci bir sorgucu gibi davran; " +
-                "kolay ikna olma.\n" +
-                turnInstruction + "\n" +
+                $"Karakterin ve amacın: {backstoryAndGoal}\n" +
+                $"Oyuncuyu sorguluyorsun. Şu an oyuncunun {currentTurn}. cevabındayız (en fazla {maxConversationTurns}).\n\n" +
                 "Kurallar:\n" +
                 "- SADECE aşağıdaki JSON şemasıyla cevap ver, başka hiçbir metin, açıklama veya markdown ekleme.\n" +
-                "- Şema: {\"reply\": string, \"disposition\": \"friendly\"|\"neutral\"|\"hostile\", " +
-                "\"action\": \"none\"|\"open_door\"|\"end_conversation\"|\"attack_player\"}\n" +
-                "- \"reply\" alanına oyuncuya söyleyeceğin, karakterine uygun, kısa (1-3 cümle) bir repliği YAZ.\n" +
-                "- \"reply\" alanı SADECE ve SADECE Türkçe olmalı. ÖNEMLİ UYARI: Cümle içinde tek bir " +
-                "İngilizce kelime (örn. \"reason\", \"because\", \"human\" gibi) bile geçerse bu KABUL EDİLEMEZ " +
-                "bir hatadır. Yazmadan önce cümleni kontrol et, her kelimenin Türkçe olduğundan emin ol.";
+                "- Şema: {\"hakaret\": true|false, \"yardim_amaci\": true|false, \"guven_ornegi\": true|false, " +
+                "\"celiski\": true|false, \"alakasiz\": true|false, \"reply\": string, " +
+                "\"disposition\": \"friendly\"|\"neutral\"|\"hostile\"}\n" +
+                "- hakaret: Oyuncu sana hakaret etti ya da kaba/saygısız konuştu mu?\n" +
+                "- yardim_amaci: Oyuncu hazineyi başka insanlara (köy, aile, hastalar vb.) yardım için kullanacağını söyledi mi?\n" +
+                "- guven_ornegi: Oyuncu geçmişte başka birine yardım ettiği SOMUT bir örnek anlattı mı? " +
+                "(kimseye yardım etmedim derse false)\n" +
+                "- celiski: Oyuncu kendi söylediklerini değiştirdi ya da birbiriyle çelişen şeyler söyledi mi? " +
+                "(örn. önce 'annem için' deyip sonra 'annem yok' demek)\n" +
+                "- alakasiz: Oyuncunun cevapları saçma, şaka ya da hazineyle hiç ilgisiz mi?\n" +
+                "- reply: Oyuncunun SON cevabına TEK kısa cümlelik, sert bir muhafıza yakışan bir tepki. " +
+                "Soru sorma, karar bildirme.\n" +
+                "- reply SADECE Türkçe kelimelerden oluşmalı; İngilizce kelime kullanma.";
+        }
+
+        /// <summary>LLM'e gönderilecek kullanıcı mesajı: konuşmanın soru/cevap dökümü.</summary>
+        public static string BuildTranscript(IReadOnlyList<string> questions, IReadOnlyList<string> answers)
+        {
+            var sb = new System.Text.StringBuilder("Konuşma:\n");
+            for (int i = 0; i < answers.Count; i++)
+            {
+                if (i < questions.Count) sb.Append("Muhafız: ").Append(questions[i]).Append('\n');
+                sb.Append("Oyuncu: ").Append(answers[i]).Append('\n');
+            }
+            return sb.ToString();
         }
     }
 }

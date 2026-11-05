@@ -1,0 +1,10 @@
+﻿Companion deneme testi — 2026-11-05 22:59
+Sahne: CompanionTest.unity, model: Companion.onnx (Inference Only), MaxStep: 1000
+| # | Sonuç | Süre (sn) | Adım |
+|---|---|---|---|
+| 1 | Zaman aşımı | 20.0 | 999 |
+| 2 | Zaman aşımı | 20.0 | 999 |
+| 3 | Zaman aşımı | 20.0 | 999 |
+| 4 | Zaman aşımı | 20.0 | 999 |
+| 5 | Zaman aşımı | 20.0 | 999 |
+Başarı oranı: 0/5 (%0), başarılı denemelerde ortalama süre: - sn

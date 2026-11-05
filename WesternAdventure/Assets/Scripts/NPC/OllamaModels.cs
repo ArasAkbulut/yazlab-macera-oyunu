@@ -13,7 +13,7 @@ namespace WesternAdventure.NPC
     internal class OllamaOptions
     {
         // Düşük sıcaklık, modelin diyalog şemasına ve Türkçe kısıtına daha tutarlı uymasını sağlar.
-        public float temperature = 0.4f;
+        public float temperature = 0.2f;
     }
 
     [Serializable]

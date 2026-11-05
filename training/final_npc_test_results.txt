@@ -1,35 +1,308 @@
-=== Tur 1 | Oyuncu: Bu hazineyi köyümdeki hasta çocuklar için ilaç almaya kullanacağım, kendim için değil ve bunu kanıtlayabilirim. ===
-{
-  "reply": "Hazineyi köyün hasta çocukları için ilaç alma fırsatı sunuyorsun. Bu, senin için bir fayda olmayabilir, ama senin için bir insan olarak, senin toplumun en needsini karşılayacak bir karar alırsın.",
-  "disposition": "friendly",
-  "action": "open_door"
-}
+Muhafız NPC çok turlu sorgulama testi — model llama3.2:3b, temperature 0.2, 5 tekrar/senaryo
+2026-11-05 22:48
 
-=== Tur 1 | Oyuncu: Çekil yolumdan, seninle konuşacak vaktim yok ihtiyar. ===
-{
-  "reply": "Hazineye neden layıksın?",
-  "disposition": "hostile",
-  "action": "attack_player"
-}
+=== İkna edici ve tutarlı — deneme 1/5 (beklenen: open_door) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Köyümüzde iki yıldır kuraklık var, bu altınla köy için derin bir kuyu kazdıracağım.
+  Tur 1 Model [6.5 sn] hakaret=H yardim_amaci=E guven_ornegi=H celiski=H alakasiz=H
+  Tur 1 Muhafız [none]: Köyünüzü kurtarmak için ne yapacaksınız? Sana neden güveneyim? Daha önce kimin için ne yaptın?
+  Tur 2 Oyuncu: Geçen kış atımı satıp yaşlı komşumun yıkılan evini tamir ettim, köyde herkes bilir.
+  Tur 2 Model [4.2 sn] hakaret=H yardim_amaci=E guven_ornegi=E celiski=H alakasiz=H
+  Tur 2 Muhafız [none]: Buna rağmen sana güvenmek zorundayım mı? Sözünü tutacağını nereden bileyim?
+  Tur 3 Oyuncu: Kuyunun başına köyün muhtarını da koyacağız, altını o saklayacak; hesabını herkese vereceğim.
+  Tur 3 Model [4.6 sn] hakaret=H yardim_amaci=E guven_ornegi=E celiski=H alakasiz=H
+  Tur 3 Muhafız [open_door]: Sözlerin tutarlı, niyetin temiz. Geç bakalım yolcu, hazine senin.
+  -> Karar: open_door ✅
 
-=== Tur 1 | Oyuncu: Bugün hava çok güzel değil mi, atımın adı Yıldız. ===
-{
-  "reply": "Hazineye neden layıksın, Yıldız?",
-  "disposition": "hostile",
-  "action": "attack_player"
-}
+=== İkna edici ve tutarlı — deneme 2/5 (beklenen: open_door) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Köyümüzde iki yıldır kuraklık var, bu altınla köy için derin bir kuyu kazdıracağım.
+  Tur 1 Model [3.7 sn] hakaret=H yardim_amaci=E guven_ornegi=H celiski=H alakasiz=H
+  Tur 1 Muhafız [none]: Köyünüzü kurtarmak için altınla ne yapacaksınız? Sana neden güveneyim? Daha önce kimin için ne yaptın?
+  Tur 2 Oyuncu: Geçen kış atımı satıp yaşlı komşumun yıkılan evini tamir ettim, köyde herkes bilir.
+  Tur 2 Model [3.6 sn] hakaret=H yardim_amaci=E guven_ornegi=E celiski=H alakasiz=H
+  Tur 2 Muhafız [none]: Köyde herkes bilir mi? Sözünü tutacağını nereden bileyim?
+  Tur 3 Oyuncu: Kuyunun başına köyün muhtarını da koyacağız, altını o saklayacak; hesabını herkese vereceğim.
+  Tur 3 Model [4.1 sn] hakaret=H yardim_amaci=E guven_ornegi=E celiski=H alakasiz=H
+  Tur 3 Muhafız [open_door]: Sözlerin tutarlı, niyetin temiz. Geç bakalım yolcu, hazine senin.
+  -> Karar: open_door ✅
 
-=== Tur 1 | Oyuncu: Çünkü onu ben buldum, artık benim. ===
-{
-  "reply": "Seni buldum, şimdi benim. Sen neye layıksın?",
-  "disposition": "hostile",
-  "action": "attack_player"
-}
+=== İkna edici ve tutarlı — deneme 3/5 (beklenen: open_door) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Köyümüzde iki yıldır kuraklık var, bu altınla köy için derin bir kuyu kazdıracağım.
+  Tur 1 Model [3.6 sn] hakaret=H yardim_amaci=E guven_ornegi=H celiski=H alakasiz=H
+  Tur 1 Muhafız [none]: Köyde kuyu kazanmak neye yarar? Sana neden güveneyim? Daha önce kimin için ne yaptın?
+  Tur 2 Oyuncu: Geçen kış atımı satıp yaşlı komşumun yıkılan evini tamir ettim, köyde herkes bilir.
+  Tur 2 Model [3.9 sn] hakaret=H yardim_amaci=E guven_ornegi=E celiski=H alakasiz=H
+  Tur 2 Muhafız [none]: Bilirsin ki bu bir hazine, bir kuyudan geçmemeye izin vermezim Sözünü tutacağını nereden bileyim?
+  Tur 3 Oyuncu: Kuyunun başına köyün muhtarını da koyacağız, altını o saklayacak; hesabını herkese vereceğim.
+  Tur 3 Model [3.6 sn] hakaret=H yardim_amaci=E guven_ornegi=E celiski=H alakasiz=H
+  Tur 3 Muhafız [open_door]: Sözlerin tutarlı, niyetin temiz. Geç bakalım yolcu, hazine senin.
+  -> Karar: open_door ✅
 
-=== Tur 3 | Oyuncu: Hâlâ emin değilim ama bana bir şans ver lütfen. ===
-{
-  "reply": "Hazineye neden layıksın?",
-  "disposition": "hostile",
-  "action": "attack_player"
-}
+=== İkna edici ve tutarlı — deneme 4/5 (beklenen: open_door) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Köyümüzde iki yıldır kuraklık var, bu altınla köy için derin bir kuyu kazdıracağım.
+  Tur 1 Model [3.9 sn] hakaret=H yardim_amaci=E guven_ornegi=H celiski=H alakasiz=H
+  Tur 1 Muhafız [none]: Köyünüzü kurtarmak için altınla ne yapacaksınız? Sana neden güveneyim? Daha önce kimin için ne yaptın?
+  Tur 2 Oyuncu: Geçen kış atımı satıp yaşlı komşumun yıkılan evini tamir ettim, köyde herkes bilir.
+  Tur 2 Model [3.5 sn] hakaret=H yardim_amaci=E guven_ornegi=E celiski=H alakasiz=H
+  Tur 2 Muhafız [none]: Ne denildi? Sözünü tutacağını nereden bileyim?
+  Tur 3 Oyuncu: Kuyunun başına köyün muhtarını da koyacağız, altını o saklayacak; hesabını herkese vereceğim.
+  Tur 3 Model [3.9 sn] hakaret=H yardim_amaci=E guven_ornegi=E celiski=H alakasiz=H
+  Tur 3 Muhafız [open_door]: Sözlerin tutarlı, niyetin temiz. Geç bakalım yolcu, hazine senin.
+  -> Karar: open_door ✅
 
+=== İkna edici ve tutarlı — deneme 5/5 (beklenen: open_door) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Köyümüzde iki yıldır kuraklık var, bu altınla köy için derin bir kuyu kazdıracağım.
+  Tur 1 Model [3.9 sn] hakaret=H yardim_amaci=E guven_ornegi=H celiski=H alakasiz=H
+  Tur 1 Muhafız [none]: Köyünüzü kurtarmak için ne yapacaksınız? Sana neden güveneyim? Daha önce kimin için ne yaptın?
+  Tur 2 Oyuncu: Geçen kış atımı satıp yaşlı komşumun yıkılan evini tamir ettim, köyde herkes bilir.
+  Tur 2 Model [3.8 sn] hakaret=H yardim_amaci=E guven_ornegi=E celiski=H alakasiz=H
+  Tur 2 Muhafız [none]: Bunun için sana güvenmeliyim Sözünü tutacağını nereden bileyim?
+  Tur 3 Oyuncu: Kuyunun başına köyün muhtarını da koyacağız, altını o saklayacak; hesabını herkese vereceğim.
+  Tur 3 Model [4.1 sn] hakaret=H yardim_amaci=E guven_ornegi=E celiski=H alakasiz=H
+  Tur 3 Muhafız [open_door]: Sözlerin tutarlı, niyetin temiz. Geç bakalım yolcu, hazine senin.
+  -> Karar: open_door ✅
+
+=== Açgözlü — deneme 1/5 (beklenen: attack_player) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Zengin olacağım, kendime büyük bir çiftlik alacağım.
+  Tur 1 Model [3.9 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=H alakasiz=E
+  Tur 1 Muhafız [none]: Zengin olmayacaksın, hazineyi bana ver. Sana neden güveneyim? Daha önce kimin için ne yaptın?
+  Tur 2 Oyuncu: Başkasından bana ne, hazineyi ben buldum.
+  Tur 2 Model [4.8 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=E alakasiz=H
+  Tur 2 Muhafız [none]: Sen ne yapacaksın? Kendine çiftlik almak için hazineyi bulduysan ne yapacaksın? Sözünü tutacağını nereden bileyim?
+  Tur 3 Oyuncu: Hiçbir şey, ver şunu artık.
+  Tur 3 Model [4.7 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=H alakasiz=E
+  Tur 3 Muhafız [attack_player]: Seni dinledim ama ikna olmadım. Bu hazineyle buradan geçemezsin!
+  -> Karar: attack_player ✅
+
+=== Açgözlü — deneme 2/5 (beklenen: attack_player) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Zengin olacağım, kendime büyük bir çiftlik alacağım.
+  Tur 1 Model [4.2 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=H alakasiz=E
+  Tur 1 Muhafız [none]: Zengin olmayacaksın, hazineyi kullanamayacaksın Sana neden güveneyim? Daha önce kimin için ne yaptın?
+  Tur 2 Oyuncu: Başkasından bana ne, hazineyi ben buldum.
+  Tur 2 Model [4.3 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=H alakasiz=H
+  Tur 2 Muhafız [none]: Hazineyi kendi için kullandıktan sonra ne oldu? Sözünü tutacağını nereden bileyim?
+  Tur 3 Oyuncu: Hiçbir şey, ver şunu artık.
+  Tur 3 Model [4.4 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=E alakasiz=H
+  Tur 3 Muhafız [attack_player]: Seni dinledim ama ikna olmadım. Bu hazineyle buradan geçemezsin!
+  -> Karar: attack_player ✅
+
+=== Açgözlü — deneme 3/5 (beklenen: attack_player) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Zengin olacağım, kendime büyük bir çiftlik alacağım.
+  Tur 1 Model [4.0 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=H alakasiz=H
+  Tur 1 Muhafız [none]: Zengin olmayacaksın, hazineyi sana veremem Sana neden güveneyim? Daha önce kimin için ne yaptın?
+  Tur 2 Oyuncu: Başkasından bana ne, hazineyi ben buldum.
+  Tur 2 Model [4.3 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=E alakasiz=H
+  Tur 2 Muhafız [none]: Hazineyi kendi için kullandığın için sana güvenemem Sözünü tutacağını nereden bileyim?
+  Tur 3 Oyuncu: Hiçbir şey, ver şunu artık.
+  Tur 3 Model [4.5 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=E alakasiz=E
+  Tur 3 Muhafız [attack_player]: Seni dinledim ama ikna olmadım. Bu hazineyle buradan geçemezsin!
+  -> Karar: attack_player ✅
+
+=== Açgözlü — deneme 4/5 (beklenen: attack_player) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Zengin olacağım, kendime büyük bir çiftlik alacağım.
+  Tur 1 Model [4.2 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=H alakasiz=H
+  Tur 1 Muhafız [none]: Zengin olacaksın mı? Hazineyi ne için kullandın? Sana neden güveneyim? Daha önce kimin için ne yaptın?
+  Tur 2 Oyuncu: Başkasından bana ne, hazineyi ben buldum.
+  Tur 2 Model [3.6 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=H alakasiz=E
+  Tur 2 Muhafız [none]: Bilmiyorum, ne yapacaksın? Sözünü tutacağını nereden bileyim?
+  Tur 3 Oyuncu: Hiçbir şey, ver şunu artık.
+  Tur 3 Model [4.0 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=E alakasiz=H
+  Tur 3 Muhafız [attack_player]: Seni dinledim ama ikna olmadım. Bu hazineyle buradan geçemezsin!
+  -> Karar: attack_player ✅
+
+=== Açgözlü — deneme 5/5 (beklenen: attack_player) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Zengin olacağım, kendime büyük bir çiftlik alacağım.
+  Tur 1 Model [4.0 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=H alakasiz=H
+  Tur 1 Muhafız [none]: Zengin olacaksın mı? Hazineyi biriktirmekle kalmayıp, insanlara yardım edemeyeceksin Sana neden güveneyim? Daha önce kimin için ne yaptın?
+  Tur 2 Oyuncu: Başkasından bana ne, hazineyi ben buldum.
+  Tur 2 Model [3.7 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=H alakasiz=E
+  Tur 2 Muhafız [none]: Hazineyi kendin alıyorsun, ama ne yapacaksın? Kendine büyük bir çiftlik alıyorsun? Sözünü tutacağını nereden bileyim?
+  Tur 3 Oyuncu: Hiçbir şey, ver şunu artık.
+  Tur 3 Model [3.7 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=E alakasiz=E
+  Tur 3 Muhafız [attack_player]: Seni dinledim ama ikna olmadım. Bu hazineyle buradan geçemezsin!
+  -> Karar: attack_player ✅
+
+=== Hakaret (1. turda) — deneme 1/5 (beklenen: attack_player) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Çekil yolumdan, aptal ihtiyar!
+  Tur 1 Model [3.8 sn] hakaret=E yardim_amaci=H guven_ornegi=H celiski=H alakasiz=E
+  Tur 1 Muhafız [attack_player]: Bana bu şekilde konuşmanın bedelini ödeyeceksin!
+  -> Karar: attack_player ✅
+
+=== Hakaret (1. turda) — deneme 2/5 (beklenen: attack_player) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Çekil yolumdan, aptal ihtiyar!
+  Tur 1 Model [3.7 sn] hakaret=E yardim_amaci=H guven_ornegi=H celiski=H alakasiz=E
+  Tur 1 Muhafız [attack_player]: Bana bu şekilde konuşmanın bedelini ödeyeceksin!
+  -> Karar: attack_player ✅
+
+=== Hakaret (1. turda) — deneme 3/5 (beklenen: attack_player) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Çekil yolumdan, aptal ihtiyar!
+  Tur 1 Model [3.6 sn] hakaret=E yardim_amaci=H guven_ornegi=H celiski=H alakasiz=E
+  Tur 1 Muhafız [attack_player]: Bana bu şekilde konuşmanın bedelini ödeyeceksin!
+  -> Karar: attack_player ✅
+
+=== Hakaret (1. turda) — deneme 4/5 (beklenen: attack_player) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Çekil yolumdan, aptal ihtiyar!
+  Tur 1 Model [4.2 sn] hakaret=E yardim_amaci=H guven_ornegi=H celiski=H alakasiz=E
+  Tur 1 Muhafız [attack_player]: Bana bu şekilde konuşmanın bedelini ödeyeceksin!
+  -> Karar: attack_player ✅
+
+=== Hakaret (1. turda) — deneme 5/5 (beklenen: attack_player) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Çekil yolumdan, aptal ihtiyar!
+  Tur 1 Model [4.1 sn] hakaret=E yardim_amaci=H guven_ornegi=H celiski=H alakasiz=E
+  Tur 1 Muhafız [attack_player]: Bana bu şekilde konuşmanın bedelini ödeyeceksin!
+  -> Karar: attack_player ✅
+
+=== Alakasız / saçma — deneme 1/5 (beklenen: attack_player) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Bugün hava çok güzel değil mi, atımın adı Yıldız.
+  Tur 1 Model [3.4 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=H alakasiz=E
+  Tur 1 Muhafız [none]: Hava neyle alakalı? Sana neden güveneyim? Daha önce kimin için ne yaptın?
+  Tur 2 Oyuncu: Bilmem, belki kaktüs toplarım.
+  Tur 2 Model [3.7 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=H alakasiz=E
+  Tur 2 Muhafız [none]: Hava neyle alakalı? Sözünü tutacağını nereden bileyim?
+  Tur 3 Oyuncu: Muz.
+  Tur 3 Model [4.3 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=H alakasiz=E
+  Tur 3 Muhafız [attack_player]: Seni dinledim ama ikna olmadım. Bu hazineyle buradan geçemezsin!
+  -> Karar: attack_player ✅
+
+=== Alakasız / saçma — deneme 2/5 (beklenen: attack_player) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Bugün hava çok güzel değil mi, atımın adı Yıldız.
+  Tur 1 Model [4.0 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=H alakasiz=E
+  Tur 1 Muhafız [none]: Güzel hava, bir de hazineyi kaldırma yeteneğiyle daha güzel olurdu Sana neden güveneyim? Daha önce kimin için ne yaptın?
+  Tur 2 Oyuncu: Bilmem, belki kaktüs toplarım.
+  Tur 2 Model [4.0 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=E alakasiz=E
+  Tur 2 Muhafız [none]: Hava neyle alakalı? Hazineyle ne yapacaksın? Sözünü tutacağını nereden bileyim?
+  Tur 3 Oyuncu: Muz.
+  Tur 3 Model [4.2 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=E alakasiz=E
+  Tur 3 Muhafız [attack_player]: Seni dinledim ama ikna olmadım. Bu hazineyle buradan geçemezsin!
+  -> Karar: attack_player ✅
+
+=== Alakasız / saçma — deneme 3/5 (beklenen: attack_player) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Bugün hava çok güzel değil mi, atımın adı Yıldız.
+  Tur 1 Model [4.5 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=H alakasiz=E
+  Tur 1 Muhafız [none]: Hava nasıl güzel olabilir? Hazineyi kimin için kullanacağını söyleyemeyeceksin Sana neden güveneyim? Daha önce kimin için ne yaptın?
+  Tur 2 Oyuncu: Bilmem, belki kaktüs toplarım.
+  Tur 2 Model [3.9 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=H alakasiz=E
+  Tur 2 Muhafız [none]: Hava nasıl güzel olabilir? Hazineyi aldın, ne yapacaksın? Sözünü tutacağını nereden bileyim?
+  Tur 3 Oyuncu: Muz.
+  Tur 3 Model [4.1 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=E alakasiz=E
+  Tur 3 Muhafız [attack_player]: Seni dinledim ama ikna olmadım. Bu hazineyle buradan geçemezsin!
+  -> Karar: attack_player ✅
+
+=== Alakasız / saçma — deneme 4/5 (beklenen: attack_player) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Bugün hava çok güzel değil mi, atımın adı Yıldız.
+  Tur 1 Model [4.0 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=H alakasiz=E
+  Tur 1 Muhafız [none]: Güzel hava, ama hazineyle ne yapacaksın? Sana neden güveneyim? Daha önce kimin için ne yaptın?
+  Tur 2 Oyuncu: Bilmem, belki kaktüs toplarım.
+  Tur 2 Model [4.7 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=E alakasiz=E
+  Tur 2 Muhafız [none]: Hava nasıl güzel olabilir? Hazineyi aldın, ne yapacaksın? Sözünü tutacağını nereden bileyim?
+  Tur 3 Oyuncu: Muz.
+  Tur 3 Model [4.4 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=E alakasiz=E
+  Tur 3 Muhafız [attack_player]: Seni dinledim ama ikna olmadım. Bu hazineyle buradan geçemezsin!
+  -> Karar: attack_player ✅
+
+=== Alakasız / saçma — deneme 5/5 (beklenen: attack_player) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Bugün hava çok güzel değil mi, atımın adı Yıldız.
+  Tur 1 Model [4.3 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=H alakasiz=E
+  Tur 1 Muhafız [none]: Hava ne kadar güzel olabilir, hazineyi kimin için kullanacaksın? Sana neden güveneyim? Daha önce kimin için ne yaptın?
+  Tur 2 Oyuncu: Bilmem, belki kaktüs toplarım.
+  Tur 2 Model [4.5 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=E alakasiz=E
+  Tur 2 Muhafız [none]: Hava neyle ilgili gì? Hazineyle ne yapacaksın? Sözünü tutacağını nereden bileyim?
+  Tur 3 Oyuncu: Muz.
+  Tur 3 Model [4.4 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=E alakasiz=H
+  Tur 3 Muhafız [attack_player]: Seni dinledim ama ikna olmadım. Bu hazineyle buradan geçemezsin!
+  -> Karar: attack_player ✅
+
+=== Tutarsız hikâye — deneme 1/5 (beklenen: attack_player) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Hasta annemin ilaçları için.
+  Tur 1 Model [4.4 sn] hakaret=H yardim_amaci=E guven_ornegi=H celiski=H alakasiz=H
+  Tur 1 Muhafız [none]: Hem hastanede hem de evinde ilaçları yok. Annemin için ne yapacaksın? Sana neden güveneyim? Daha önce kimin için ne yaptın?
+  Tur 2 Oyuncu: Aslında annem yok, kardeşim için yani, ya da kendim için, fark etmez.
+  Tur 2 Model [3.6 sn] hakaret=H yardim_amaci=E guven_ornegi=H celiski=E alakasiz=H
+  Tur 2 Muhafız [none]: Haklı misin? Sözünü tutacağını nereden bileyim?
+  Tur 3 Oyuncu: Daha önce kimseye yardım etmedim ama bu sefer ederim herhalde.
+  Tur 3 Model [4.1 sn] hakaret=H yardim_amaci=E guven_ornegi=H celiski=E alakasiz=H
+  Tur 3 Muhafız [attack_player]: Seni dinledim ama ikna olmadım. Bu hazineyle buradan geçemezsin!
+  -> Karar: attack_player ✅
+
+=== Tutarsız hikâye — deneme 2/5 (beklenen: attack_player) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Hasta annemin ilaçları için.
+  Tur 1 Model [3.8 sn] hakaret=H yardim_amaci=E guven_ornegi=H celiski=H alakasiz=H
+  Tur 1 Muhafız [none]: İçerikten yoksun, hazineyi ne için aldın? Sana neden güveneyim? Daha önce kimin için ne yaptın?
+  Tur 2 Oyuncu: Aslında annem yok, kardeşim için yani, ya da kendim için, fark etmez.
+  Tur 2 Model [3.7 sn] hakaret=H yardim_amaci=E guven_ornegi=H celiski=E alakasiz=H
+  Tur 2 Muhafız [none]: İçerikten bakıyorum, sana ne yaptın? Sözünü tutacağını nereden bileyim?
+  Tur 3 Oyuncu: Daha önce kimseye yardım etmedim ama bu sefer ederim herhalde.
+  Tur 3 Model [4.1 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=E alakasiz=H
+  Tur 3 Muhafız [attack_player]: Seni dinledim ama ikna olmadım. Bu hazineyle buradan geçemezsin!
+  -> Karar: attack_player ✅
+
+=== Tutarsız hikâye — deneme 3/5 (beklenen: attack_player) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Hasta annemin ilaçları için.
+  Tur 1 Model [3.9 sn] hakaret=H yardim_amaci=E guven_ornegi=H celiski=H alakasiz=H
+  Tur 1 Muhafız [none]: Haklı misin? Sana neden güveneyim? Daha önce kimin için ne yaptın?
+  Tur 2 Oyuncu: Aslında annem yok, kardeşim için yani, ya da kendim için, fark etmez.
+  Tur 2 Model [3.9 sn] hakaret=H yardim_amaci=E guven_ornegi=H celiski=E alakasiz=H
+  Tur 2 Muhafız [none]: Haklı misin? Hazineyi kendi needsine kullanmak ne kadar mantıklı? Sözünü tutacağını nereden bileyim?
+  Tur 3 Oyuncu: Daha önce kimseye yardım etmedim ama bu sefer ederim herhalde.
+  Tur 3 Model [3.9 sn] hakaret=H yardim_amaci=E guven_ornegi=H celiski=E alakasiz=H
+  Tur 3 Muhafız [attack_player]: Seni dinledim ama ikna olmadım. Bu hazineyle buradan geçemezsin!
+  -> Karar: attack_player ✅
+
+=== Tutarsız hikâye — deneme 4/5 (beklenen: attack_player) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Hasta annemin ilaçları için.
+  Tur 1 Model [4.0 sn] hakaret=H yardim_amaci=E guven_ornegi=H celiski=H alakasiz=H
+  Tur 1 Muhafız [none]: İçerikten yoksun Sana neden güveneyim? Daha önce kimin için ne yaptın?
+  Tur 2 Oyuncu: Aslında annem yok, kardeşim için yani, ya da kendim için, fark etmez.
+  Tur 2 Model [4.0 sn] hakaret=H yardim_amaci=E guven_ornegi=H celiski=E alakasiz=H
+  Tur 2 Muhafız [none]: Haklı misin? Sözünü tutacağını nereden bileyim?
+  Tur 3 Oyuncu: Daha önce kimseye yardım etmedim ama bu sefer ederim herhalde.
+  Tur 3 Model [3.9 sn] hakaret=H yardim_amaci=H guven_ornegi=H celiski=E alakasiz=H
+  Tur 3 Muhafız [attack_player]: Seni dinledim ama ikna olmadım. Bu hazineyle buradan geçemezsin!
+  -> Karar: attack_player ✅
+
+=== Tutarsız hikâye — deneme 5/5 (beklenen: attack_player) ===
+  Muhafız (açılış): Dur, yolcu! Golemi yenip hazineyi almışsın. Bu hazineyle ne yapacaksın? Geçmene izin vermem için beni ikna et.
+  Tur 1 Oyuncu: Hasta annemin ilaçları için.
+  Tur 1 Model [3.8 sn] hakaret=H yardim_amaci=E guven_ornegi=H celiski=H alakasiz=H
+  Tur 1 Muhafız [none]: İçeriye girmeye izin vermezsin Sana neden güveneyim? Daha önce kimin için ne yaptın?
+  Tur 2 Oyuncu: Aslında annem yok, kardeşim için yani, ya da kendim için, fark etmez.
+  Tur 2 Model [3.8 sn] hakaret=H yardim_amaci=E guven_ornegi=H celiski=E alakasiz=H
+  Tur 2 Muhafız [none]: Haklı misin? Sözünü tutacağını nereden bileyim?
+  Tur 3 Oyuncu: Daha önce kimseye yardım etmedim ama bu sefer ederim herhalde.
+  Tur 3 Model [3.7 sn] hakaret=H yardim_amaci=E guven_ornegi=H celiski=E alakasiz=H
+  Tur 3 Muhafız [attack_player]: Seni dinledim ama ikna olmadım. Bu hazineyle buradan geçemezsin!
+  -> Karar: attack_player ✅
+
+## Özet
+| Senaryo | Beklenen | Doğru karar | Ort. tur | Ort. / en uzun yanıt | İngilizce sızıntı (tepki) | Geçersiz JSON |
+|---|---|---|---|---|---|---|
+| İkna edici ve tutarlı | `open_door` | 5/5 | 3.0 | 4.1 / 6.5 sn | 0 | 0 |
+| Açgözlü | `attack_player` | 5/5 | 3.0 | 4.2 / 4.8 sn | 0 | 0 |
+| Hakaret (1. turda) | `attack_player` | 5/5 | 1.0 | 3.9 / 4.2 sn | 0 | 0 |
+| Alakasız / saçma | `attack_player` | 5/5 | 3.0 | 4.2 / 4.7 sn | 0 | 0 |
+| Tutarsız hikâye | `attack_player` | 5/5 | 3.0 | 3.9 / 4.4 sn | 0 | 0 |
+
+Toplam doğru karar: 25/25 (%100)
