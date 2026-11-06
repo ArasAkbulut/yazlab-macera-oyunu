@@ -345,17 +345,22 @@ son sürümde 0 gösterdi, ancak bu sayaç sabit bir kelime listesine dayanır v
 
 ### 6.4 Oynanış testi
 
-<!-- TODO: elle oynayıp doğrulananları işaretle -->
-| Kontrol | Sonuç |
-|---|---|
-| Dört haydut yenilmeden köpek gönderilemiyor | _?_ |
-| Köpek kola gidip kapıyı açıyor ve geri dönüyor | _?_ |
-| Golem yenilip sandık açılıyor | _?_ |
-| Dönüşte muhafız konuşması açılıyor, kontroller kilitleniyor | _?_ |
-| İkna edici cevaplar → kazanma ekranı | _?_ |
-| Saygısız cevap → kaybetme ekranı, "Yeniden Oyna" çalışıyor | _?_ |
-| Ollama kapalıyken hata mesajı, oyun çökmüyor | _?_ |
-| `Polish > Run Gameplay Checks` | _?_ |
+Senaryonun ilk yarısı `WesternAdventure > Polish > Run Gameplay Checks` editör testiyle otomatik,
+muhafızla ilgili sonuçlar ise oyun elle oynanarak doğrulandı (Ollama + `llama3.2:3b`).
+
+| Kontrol | Yöntem | Sonuç |
+|---|---|---|
+| Dört haydut yenilmeden köpek gönderilemiyor | Otomatik | ✔ |
+| Köpek kola gidip kapıyı açıyor ve geri dönüyor | Otomatik | ✔ |
+| Golem yenilip sandık açılıyor | Otomatik | ✔ |
+| Dönüşte muhafız konuşması açılıyor, kontroller kilitleniyor | Otomatik | ✔ |
+| İkna edici cevaplar → kazanma ekranı | Elle | ✔ |
+| Saygısız cevap → kaybetme ekranı, "Yeniden Oyna" çalışıyor | Elle | ✔ |
+| Ollama kapalıyken hata mesajı ("NPC şu an seni duyamıyor…"), oyun çökmüyor | Elle | ✔ |
+| `Polish > Run Gameplay Checks` (24 kontrol) | Otomatik | ✔ 24/24 PASS |
+
+Not: Otomatik testte muhafızın kararı LLM'e sorulmadan simüle edilir; LLM'in karar doğruluğu
+Bölüm 6.3'te ayrıca ölçülmüştür.
 
 ## 7. Sonuç ve Tartışma
 
